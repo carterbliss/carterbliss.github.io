@@ -1,25 +1,23 @@
+timezone: Etc/UTC
 source: site
+
+# Asset paths
 paths:
   uploads: uploads
-  dam_uploads: ''
   static: ''
-  dam_static: ''
-  collections: collections
-  data: _data
-  layouts: _layouts
-  includes: _includes
+
+# Collections 
 collections_config:
   data:
     path: _data
-    output: false
-    icon:
+    disable_url: true
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
   posts:
     path: collections/_posts
-    output: true
-    icon:
+    url: "/blog/[slug]"
+    icon: newspaper
     create:
       path: >-
         [relative_base_path]/{date|year}-{date|month}-{date|day}-{title|slugify}.[ext]
@@ -31,7 +29,7 @@ collections_config:
         path: site/schemas/post.md
   pages:
     path: collections/_pages
-    output: true
+    url: "/{title}"
     icon: wysiwyg
     disable_add: false
     disable_add_folder: false
@@ -41,22 +39,9 @@ collections_config:
         path: site/schemas/page.html
   projects:
     path: collections/_projects
-    output: true
+    url: "/projects/[slug]"
     description: ''
-    icon: work_outline
-    preview:
-      text:
-      subtext:
-        - key: subtitle
-      icon:
-      icon_color:
-      image:
-      metadata:
-      gallery:
-    _editables:
-    _inputs:
-    _select_data:
-    _structures:
+    icon: work
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -65,11 +50,8 @@ collections_config:
         path: site/schemas/project.md
   testimonials:
     path: collections/_testimonials
-    output: false
-    description: ''
+    disable_url: true
     icon: format_quote
-    sort:
-      key: name
     sort_options:
       - key: name
       - key: name
@@ -77,21 +59,8 @@ collections_config:
       - key: position
       - key: position
         order: desc
-    preview:
-      text:
-      subtext:
-        - key: position
-      icon:
-      icon_color:
-      image:
-      metadata:
-      gallery:
-    _editables:
     _enabled_editors:
       - data
-    _inputs:
-    _select_data:
-    _structures:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -100,13 +69,15 @@ collections_config:
         path: site/schemas/testimonial.md
   drafts:
     path: collections/_drafts
-    output: true
-    icon:
+    disable_url: true
+    icon: newspaper
     create:
       publish_to: posts
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+
+# Sidebar
 collection_groups:
   - heading: Content
     collections:
@@ -120,6 +91,8 @@ collection_groups:
   - heading: Settings
     collections:
       - data
+
+# Globally scoped inputs
 _inputs:
   tags:
     type: multiselect
@@ -127,8 +100,9 @@ _inputs:
       allow_create: true
       empty_type: array
     cascade: true
+
+# Globally scoped structs
 _structures:
   content_blocks:
     style: modal
-data_config: true
-timezone: Etc/UTC
+    values: []
