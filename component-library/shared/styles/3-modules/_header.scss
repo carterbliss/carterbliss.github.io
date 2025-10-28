@@ -168,12 +168,12 @@
     background: linear-gradient(90deg, $primary-color 0%, $secondary-color 167%);
 
     &:hover {
-      .ion-md-close {
+      .nav-icon-close {
         transform: rotate(90deg);
       }
     }
 
-    .ion-md-close {
+    .nav-icon-close {
       color: $white;
       transition: $global-transition;
       will-change: transform;
