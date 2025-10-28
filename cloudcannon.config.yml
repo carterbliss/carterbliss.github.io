@@ -1,6 +1,13 @@
 timezone: Etc/UTC
 source: site
 
+# Git commit config
+commit_templates:
+  - label: Default message
+    template_string: '[default_commit_message]'
+  - label: Custom message
+    template_string: '{message}'
+
 # Asset paths
 paths:
   uploads: uploads
@@ -26,7 +33,7 @@ collections_config:
     disable_file_actions: false
     schemas:
       default:
-        path: site/schemas/post.md
+        path: ".cloudcannon/schemas/post.md"
   pages:
     path: collections/_pages
     url: "/{title}"
@@ -36,7 +43,7 @@ collections_config:
     disable_file_actions: false
     schemas:
       default:
-        path: site/schemas/page.html
+        path: ".cloudcannon/schemas/page.html"
   projects:
     path: collections/_projects
     url: "/projects/[slug]"
@@ -47,7 +54,7 @@ collections_config:
     disable_file_actions: false
     schemas:
       default:
-        path: site/schemas/project.md
+        path: ".cloudcannon/schemas/project.md"
   testimonials:
     path: collections/_testimonials
     disable_url: true
@@ -66,7 +73,7 @@ collections_config:
     disable_file_actions: false
     schemas:
       default:
-        path: site/schemas/testimonial.md
+        path: ".cloudcannon/schemas/testimonial.md"
   drafts:
     path: collections/_drafts
     disable_url: true
