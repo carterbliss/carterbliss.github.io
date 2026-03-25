@@ -9,7 +9,7 @@
           <div class="{{c}}__contact-head">
             <h2 class="{{c}}__contact-title">{{ include.form_title }}</h2>
           </div>
-          <form class="{{c}}__form" id="contact-form">
+          <form class="{{c}}__form" id="contact-form" onsubmit="return false;">
             <div class="{{c}}__form-group">
               <label class="{{c}}__form-label screen-reader-text" for="form-name">Your Name</label>
               <input class="{{c}}__form-input" id="form-name" type="text" placeholder="Your name..." required>
@@ -23,7 +23,8 @@
               <textarea class="{{c}}__form-input" id="form-text" rows="9" placeholder="Your message..." required></textarea>
             </div>
             <div class="{{c}}__form-group {{c}}__form-group--button">
-              <button class="c-button c-button--primary c-button--large" type="submit">{{ include.form_button_text }}</button>
+              <button class="c-button c-button--primary c-button--large" type="button" id="contact-submit">{{ include.form_button_text }}</button>
+              <span class="{{c}}__sent" id="contact-sent" style="display:none;">Sent ✓</span>
             </div>
           </form>
         </div>
@@ -34,16 +35,27 @@
 </div>
 
 <script>
-document.getElementById('contact-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var name    = document.getElementById('form-name').value.trim();
-  var email   = document.getElementById('form-email').value.trim();
-  var message = document.getElementById('form-text').value.trim();
-  var body    = message + '\n\n\u2014 ' + name + ' (' + email + ')';
-  window.location.href =
-    'mailto:cbliss8@gatech.edu' +
-    '?subject=' + encodeURIComponent(name) +
-    '&body='    + encodeURIComponent(body);
+document.getElementById('contact-submit').addEventListener('click', function() {
+  var form    = document.getElementById('contact-form');
+  var name    = document.getElementById('form-name');
+  var email   = document.getElementById('form-email');
+  var message = document.getElementById('form-text');
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  var body = message.value.trim() + '\n\n\u2014 ' + name.value.trim() + ' (' + email.value.trim() + ')';
+  var a = document.createElement('a');
+  a.href = 'mailto:cbliss8@gatech.edu'
+    + '?subject=' + encodeURIComponent(name.value.trim())
+    + '&body='    + encodeURIComponent(body);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  document.getElementById('contact-sent').style.display = 'inline';
 });
 </script>
 <!-- end contact -->
