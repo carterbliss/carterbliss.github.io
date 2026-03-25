@@ -52,7 +52,9 @@ document.getElementById('contact-form').addEventListener('submit', function(e) {
   })
   .then(function(res) {
     if (res.ok) {
-      document.getElementById('contact-sent').style.display = 'inline';
+      var sent = document.getElementById('contact-sent');
+      sent.style.display = 'inline';
+      setTimeout(function() { sent.style.display = 'none'; }, 5000);
       document.getElementById('contact-form').reset();
     } else {
       alert('Something went wrong. Please try again.');
