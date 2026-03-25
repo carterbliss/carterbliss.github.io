@@ -22,17 +22,18 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-          bundler-cache: true
-          working-directory: site
 
       - name: Install npm dependencies
         run: npm install
+
+      - name: Install Jekyll dependencies
+        run: npm run jekyll:install
 
       - name: Build site
         run: npm run build
