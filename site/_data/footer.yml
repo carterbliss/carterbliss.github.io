@@ -3,13 +3,9 @@ footer_menu__settings:
     - title: 'Home'
       url: '/'
     - title: 'Projects'
-      url: '/projects/'
-    - title: 'Elements'
-      url: '/elements/'
+      url: '/#projects'
     - title: 'About'
       url: '/about/'
-    - title: 'Blog'
-      url: '/blog/'
 
 copyright_text_html: >-
-  <p> 2025 &copy; <a href="/">Vonge</a>. Template by <a href="https://cloudcannon.com/">CloudCannon</a>.</p>
+  <p>2026 &copy; Carter Bliss.</p>
