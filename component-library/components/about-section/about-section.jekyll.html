@@ -1,0 +1,58 @@
+<!-- begin about-section -->
+{% assign c = "c-about" %}
+<section class="{{c}} animate" id="about">
+  <div class="container">
+    <div class="row">
+      <div class="col col-12">
+        <div class="{{c}}__inner">
+
+          <div class="{{c}}__left">
+            <h2 class="{{c}}__title">{{ include.title }}</h2>
+            <div class="{{c}}__bio">{{ include.bio_html }}</div>
+          </div>
+
+          <div class="{{c}}__right">
+            {% if include.video_embed_url != "" %}
+            <div class="{{c}}__video">
+              <iframe
+                src="{{ include.video_embed_url }}"
+                title="About Carter Bliss"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+              </iframe>
+            </div>
+            {% endif %}
+
+            {% if include.photos.size > 0 %}
+            <div class="{{c}}__slideshow">
+              {% for photo in include.photos %}
+              <img
+                class="{{c}}__slide{% if forloop.first %} is-active{% endif %}"
+                src="{{ photo.image }}"
+                alt="{{ photo.image_alt | default: 'Photo' }}"
+                loading="lazy">
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var slides = document.querySelectorAll('.c-about__slide');
+  if (slides.length < 2) return;
+  var current = 0;
+  setInterval(function () {
+    slides[current].classList.remove('is-active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('is-active');
+  }, 3500);
+})();
+</script>
+<!-- end about-section -->
