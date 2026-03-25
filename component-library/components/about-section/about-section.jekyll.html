@@ -2,24 +2,20 @@
 {% assign c = "c-about" %}
 <section class="{{c}} animate" id="about">
   <div class="container">
-    <div class="row">
-      <div class="col col-12">
-        <div class="{{c}}__inner">
 
-          <div class="{{c}}__left">
-            <h2 class="{{c}}__title">{{ include.title }}</h2>
-            <div class="{{c}}__bio">{{ include.bio_html }}</div>
-          </div>
+    <h2 class="{{c}}__title">{{ include.title }}</h2>
 
-          <div class="{{c}}__right">
-            <div class="{{c}}__media">
-              <img src="{{ include.photo }}" alt="{{ include.photo_alt | default: 'Carter Bliss' }}" loading="lazy">
-            </div>
-          </div>
-
+    <div class="{{c}}__columns">
+      <div class="{{c}}__left">
+        <div class="{{c}}__bio">{{ include.bio_html }}</div>
+      </div>
+      <div class="{{c}}__right">
+        <div class="{{c}}__media">
+          <img src="{{ include.photo }}" alt="{{ include.photo_alt | default: 'Carter Bliss' }}" loading="lazy">
         </div>
       </div>
     </div>
+
   </div>
 </section>
 <!-- end about-section -->

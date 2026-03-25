@@ -11,28 +11,29 @@
     padding: 40px 0;
   }
 
-  &__inner {
+  &__title {
+    text-align: center;
+    color: $heading-font-color;
+    margin-bottom: 48px;
+
+    @media only screen and (max-width: $tablet) {
+      margin-bottom: 32px;
+    }
+  }
+
+  &__columns {
     display: flex;
     align-items: center;
-    gap: 60px;
+    gap: 48px;
 
     @media only screen and (max-width: $tablet) {
       flex-direction: column;
-      gap: 40px;
+      gap: 32px;
     }
   }
 
   &__left {
     flex: 1;
-
-    @media only screen and (max-width: $tablet) {
-      width: 100%;
-    }
-  }
-
-  &__title {
-    margin-bottom: 24px;
-    color: $heading-font-color;
   }
 
   &__bio {
@@ -50,15 +51,9 @@
 
   &__right {
     flex: 1;
-
-    @media only screen and (max-width: $tablet) {
-      width: 100%;
-    }
   }
 
   &__media {
-    position: relative;
-    width: 100%;
     border-radius: $global-radius;
     overflow: hidden;
     background: $background-color-alt;
@@ -68,14 +63,13 @@
       height: 420px;
       object-fit: cover;
       display: block;
-      border-radius: $global-radius;
 
       @media only screen and (max-width: $desktop) {
         height: 340px;
       }
 
       @media only screen and (max-width: $tablet) {
-        height: 280px;
+        height: 260px;
       }
     }
   }
