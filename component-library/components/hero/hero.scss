@@ -186,18 +186,26 @@
 			content: "";
 			display: block;
 			position: absolute;
-			top: 0;
-			z-index: 1;
+			top: -12px;
+			left: 12px;
+			z-index: 0;
 			width: 100%;
 			height: 100%;
 			border-radius: 60px;
-			background: $blue-gray;
+			background: repeating-linear-gradient(
+				-45deg,
+				rgba($primary-color, 0.18) 0px,
+				rgba($primary-color, 0.18) 2px,
+				transparent 2px,
+				transparent 12px
+			);
+			border: 1px solid rgba($primary-color, 0.2);
 		}
 
 		img {
 			position: absolute;
 			top: 0;
-			z-index: 1;
+			z-index: 2;
 			height: 100%;
 			width: 100%;
 			border-radius: 60px;
