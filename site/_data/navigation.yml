@@ -6,8 +6,6 @@ menu__settings:
       url: '/'
     - title: 'Projects'
       url: '/#projects'
-    - title: 'Blog'
-      url: '/blog/'
     - title: 'Learn About Me'
       url: '/about/'
     - title: 'Resume'
