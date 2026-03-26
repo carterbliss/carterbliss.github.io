@@ -80,7 +80,7 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 <summary>Initialize Variables</summary>
 <div class="code-description">
   
-  <strong>Approach:</strong> To run plausability functions, range functions, and calibration functions, we need to establish two structs that will be used throughout the system. Our first struct is steering params, which essentially sets all relevant extremeties and important data points, such as the midpoint adc value. Our system data struct is used for real time sensor value input. These are the raw values we take from our steering sensor to input into our system's functions. 
+  <strong>Approach:</strong> To run plausability, range, and calibration functions, we need to establish two structures that will be used throughout the system. Our first struct is steering parameters, which essentially sets all relevant extremeties and important data points, such as the midpoint analog to digital conversion(adc) value. Our system data struct is used for real time sensor value input. These are the raw adc values we take from our steering sensor to input into our system's functions. 
 </div>
 <pre><code class="language-cpp">struct SteeringParams_s {
     // raw ADC input signals
@@ -146,11 +146,11 @@ struct SteeringSystemData_s
 <summary>Recalibrate</summary>
 <div class="code-description">
 
-  <strong>Approach:</strong> For our steering system, we only recalibrate the digital sensor, since its data analysis means come from a magnet which can shift during motion. Therefore for this function we intake the digitals raw values, as well as a button on the steering wheel which triggers a recalibration. Our function then constantly reupdates relative extremeties, and once the button releases it will write those values to EEPROM (Later seen in vehicle control front tasks).
+  <strong>Approach:</strong> For our steering system, we only recalibrate the digital sensor, since its sensor readings  come from a magnet which can rattle when the car is active. Therefore, for this function we intake the digital raw values, as well as a button on the steering wheel which triggers a recalibration. Our function then constantly reupdates relative extremeties, and once the button releases it will write those values to EEPROM (Later seen in vehicle control front tasks). Additionally, in this function we set our steering parameters according to the minimum and maximum values we read. 
 </div>
 <pre><code class="language-cpp">void SteeringSystem::recalibrate_steering_digital(const uint32_t analog_raw, const uint32_t digital_raw, bool calibration_is_on) {
     //get current raw angles
-    const uint32_t curr_digital_raw = static_cast<uint32_t>(digital_raw); //NOLINT will eventually be uint32
+    const uint32_t curr_digital_raw = static_cast&lt;uint32_t&gt;(digital_raw); //NOLINT will eventually be uint32
     
     //button just pressed ->recalibration window
     if (calibration_is_on && !_calibrating){
@@ -175,15 +175,15 @@ struct SteeringSystemData_s
             std::swap(_steeringParams.min_steering_signal_digital,_steeringParams.max_steering_signal_digital);
         }
         _steeringParams.span_signal_digital = _steeringParams.max_steering_signal_digital-_steeringParams.min_steering_signal_digital;
-        _steeringParams.analog_tol_deg = static_cast<float>(_steeringParams.span_signal_analog) * _steeringParams.analog_tol * _steeringParams.deg_per_count_analog;
-        _steeringParams.digital_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
-        _steeringParams.analog_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
-        const int32_t analog_margin_counts = static_cast<int32_t>(_steeringParams.analog_tol * static_cast<float>(_steeringParams.span_signal_analog)); //NOLINT
-        const int32_t digital_margin_counts = static_cast<int32_t>(_steeringParams.digital_tol_deg /_steeringParams.deg_per_count_digital); //NOLINT
-        _steeringParams.analog_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_analog) - analog_margin_counts;
-        _steeringParams.analog_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_analog) + analog_margin_counts;
-        _steeringParams.digital_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_digital) - digital_margin_counts;
-        _steeringParams.digital_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_digital) + digital_margin_counts;
+        _steeringParams.analog_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_analog) * _steeringParams.analog_tol * _steeringParams.deg_per_count_analog;
+        _steeringParams.digital_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
+        _steeringParams.analog_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
+        const int32_t analog_margin_counts = static_cast&lt;int32_t&gt;(_steeringParams.analog_tol * static_cast&lt;float&gt;(_steeringParams.span_signal_analog)); //NOLINT
+        const int32_t digital_margin_counts = static_cast&lt;int32_t&gt;(_steeringParams.digital_tol_deg /_steeringParams.deg_per_count_digital); //NOLINT
+        _steeringParams.analog_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_analog) - analog_margin_counts;
+        _steeringParams.analog_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_analog) + analog_margin_counts;
+        _steeringParams.digital_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_digital) - digital_margin_counts;
+        _steeringParams.digital_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_digital) + digital_margin_counts;
         _steeringParams.error_between_sensors_tolerance = _steeringParams.analog_tol_deg + _steeringParams.digital_tol_deg;
     } 
 }
