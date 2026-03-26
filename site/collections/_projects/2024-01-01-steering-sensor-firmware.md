@@ -65,7 +65,67 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 
 <details>
 <summary>Initialize Variables</summary>
-<pre><code>// Paste your initialize variables code here
+<pre><code>// struct SteeringParams_s {
+    // raw ADC input signals
+    uint32_t min_steering_signal_analog; //Raw ADC value from analog sensor at minimum (left) steering angle (calibration)
+    uint32_t max_steering_signal_analog; //Raw ADC value from analog sensor at maximum (right) steering angle
+    uint32_t min_steering_signal_digital; //Raw ADC value from digital sensor at minimum (left) steering angle
+    uint32_t max_steering_signal_digital; //Raw ADC value from digital sensor at maximum (right) steering angle
+
+    int32_t analog_min_with_margins;
+    int32_t analog_max_with_margins;
+    int32_t digital_min_with_margins;
+    int32_t digital_max_with_margins;
+
+    uint32_t span_signal_analog;
+    uint32_t span_signal_digital;
+    int32_t digital_midpoint;
+    int32_t analog_midpoint;
+
+    // calibration limits
+    uint32_t min_observed_digital;
+    uint32_t max_observed_digital;
+    uint32_t min_observed_analog; // do we need to do min/max calibration for analog?
+    uint32_t max_observed_analog;
+
+    // conversion rates
+    // float deg_per_count_analog = 0.0439f; //hard coded for analog (180)
+    float deg_per_count_analog;
+    float deg_per_count_digital; //based on digital readings
+
+    // implausibility values
+    float analog_tol; //+- 0.5% error
+    float analog_tol_deg;
+    float digital_tol_deg; // +- 0.2 degrees error
+   
+    // rate of angle change
+    float max_dtheta_threshold; //maximum change in angle since last reading to consider the reading valid
+
+    // difference rating
+    float error_between_sensors_tolerance; //maximum difference between digital and analog sensor allowed
+};
+
+struct SteeringSystemData_s
+{
+    uint32_t analog_raw;
+    uint32_t digital_raw;
+
+    float analog_steering_angle; //in degrees
+    float digital_steering_angle; //in degrees
+    float output_steering_angle; // represents the better output of the two sensors or some combination of the values
+
+
+    float analog_steering_velocity_deg_s; //in degrees per second
+    float digital_steering_velocity_deg_s;
+
+
+    bool digital_oor_implausibility;
+    bool analog_oor_implausibility;
+    bool sensor_disagreement_implausibility;
+    bool dtheta_exceeded_analog;
+    bool dtheta_exceeded_digital;
+    bool both_sensors_fail;
+};
 </code></pre>
 </details>
 
