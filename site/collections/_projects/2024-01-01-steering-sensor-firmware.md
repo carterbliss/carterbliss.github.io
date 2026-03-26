@@ -1,22 +1,81 @@
 ---
-date: 2024-01-01
+date: 2026-03-25
 title: Steering Sensor Firmware Design
-subtitle: HyTech Racing – Embedded Systems
+subtitle: HyTech Racing – Embedded Firmware
 image: '/images/ht09.png'
 ---
 
 ## Overview
 
-As part of Georgia Tech's HyTech Racing team, I designed and implemented the firmware for the steering angle sensor system used on the formula-style electric race car. The steering sensor provides real-time angle data critical for vehicle dynamics, traction control, and telemetry.
+For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I worked with a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, and also run plausability and recalibration functions. 
+
 
 ## Technical Details
 
-The firmware was written in C/C++ targeting an STM32 microcontroller, interfacing with a rotary encoder via SPI. Key responsibilities included:
+The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an orbis digital sensor.
 
-- Configuring SPI communication between the MCU and the steering angle sensor
-- Implementing interrupt-driven data acquisition for low-latency readings
-- Filtering and calibrating raw sensor output into meaningful angle values
-- Integrating the sensor data into the car's CAN bus network for consumption by other systems
+<style>
+.code-accordion details {
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #161b22;
+  overflow: hidden;
+}
+.code-accordion summary {
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e6edf3;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.code-accordion summary::-webkit-details-marker { display: none; }
+.code-accordion summary::before {
+  content: '▶';
+  font-size: 11px;
+  color: #58a6ff;
+  transition: transform 0.2s ease;
+}
+.code-accordion details[open] summary::before {
+  transform: rotate(90deg);
+}
+.code-accordion details[open] summary {
+  border-bottom: 1px solid #30363d;
+}
+.code-accordion pre {
+  margin: 0;
+  padding: 20px;
+  background: #0d1117;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.code-accordion code {
+  color: #c9d1d9;
+  font-family: 'Courier New', Courier, monospace;
+}
+</style>
+
+<div class="code-accordion">
+
+<details>
+<summary>Initialize Variables</summary>
+<pre><code>// Paste your initialize variables code here
+</code></pre>
+</details>
+
+<details>
+<summary>Recalibrate</summary>
+<pre><code>// Paste your recalibrate code here
+</code></pre>
+</details>
+
+</div>
 
 ## Challenges
 
