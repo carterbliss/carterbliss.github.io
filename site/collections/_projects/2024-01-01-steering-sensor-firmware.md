@@ -7,12 +7,16 @@ image: '/images/ht09.png'
 
 ## Overview
 
-For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I worked with a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, and also run plausability and recalibration functions. 
+For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I worked with a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, and also run plausability and recalibration functions.
 
 
 ## Technical Details
 
 The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an orbis digital sensor.
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
 
 <style>
 .code-accordion details {
@@ -40,6 +44,7 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
   font-size: 11px;
   color: #58a6ff;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 .code-accordion details[open] summary::before {
   transform: rotate(90deg);
@@ -47,17 +52,25 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 .code-accordion details[open] summary {
   border-bottom: 1px solid #30363d;
 }
-.code-accordion pre {
-  margin: 0;
-  padding: 20px;
-  background: #0d1117;
-  overflow-x: auto;
-  font-size: 13px;
+.code-accordion .code-description {
+  padding: 14px 20px;
+  font-size: 14px;
   line-height: 1.6;
+  color: #8b949e;
+  border-bottom: 1px solid #30363d;
+  background: #161b22;
 }
-.code-accordion code {
+.code-accordion .code-description strong {
   color: #c9d1d9;
-  font-family: 'Courier New', Courier, monospace;
+}
+.code-accordion pre {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+.code-accordion pre code.hljs {
+  padding: 20px !important;
 }
 </style>
 
@@ -65,7 +78,11 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 
 <details>
 <summary>Initialize Variables</summary>
-<pre><code>// struct SteeringParams_s {
+<div class="code-description">
+  <strong>Purpose:</strong> Add a summary of what this function does here.<br>
+  <strong>Approach:</strong> Add a description of how you approached it here.
+</div>
+<pre><code class="language-cpp">struct SteeringParams_s {
     // raw ADC input signals
     uint32_t min_steering_signal_analog; //Raw ADC value from analog sensor at minimum (left) steering angle (calibration)
     uint32_t max_steering_signal_analog; //Raw ADC value from analog sensor at maximum (right) steering angle
@@ -85,24 +102,23 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
     // calibration limits
     uint32_t min_observed_digital;
     uint32_t max_observed_digital;
-    uint32_t min_observed_analog; // do we need to do min/max calibration for analog?
+    uint32_t min_observed_analog;
     uint32_t max_observed_analog;
 
     // conversion rates
-    // float deg_per_count_analog = 0.0439f; //hard coded for analog (180)
     float deg_per_count_analog;
-    float deg_per_count_digital; //based on digital readings
+    float deg_per_count_digital;
 
     // implausibility values
-    float analog_tol; //+- 0.5% error
+    float analog_tol;
     float analog_tol_deg;
-    float digital_tol_deg; // +- 0.2 degrees error
-   
+    float digital_tol_deg;
+
     // rate of angle change
-    float max_dtheta_threshold; //maximum change in angle since last reading to consider the reading valid
+    float max_dtheta_threshold;
 
     // difference rating
-    float error_between_sensors_tolerance; //maximum difference between digital and analog sensor allowed
+    float error_between_sensors_tolerance;
 };
 
 struct SteeringSystemData_s
@@ -110,14 +126,12 @@ struct SteeringSystemData_s
     uint32_t analog_raw;
     uint32_t digital_raw;
 
-    float analog_steering_angle; //in degrees
-    float digital_steering_angle; //in degrees
-    float output_steering_angle; // represents the better output of the two sensors or some combination of the values
+    float analog_steering_angle;
+    float digital_steering_angle;
+    float output_steering_angle;
 
-
-    float analog_steering_velocity_deg_s; //in degrees per second
+    float analog_steering_velocity_deg_s;
     float digital_steering_velocity_deg_s;
-
 
     bool digital_oor_implausibility;
     bool analog_oor_implausibility;
@@ -125,17 +139,22 @@ struct SteeringSystemData_s
     bool dtheta_exceeded_analog;
     bool dtheta_exceeded_digital;
     bool both_sensors_fail;
-};
-</code></pre>
+};</code></pre>
 </details>
 
 <details>
 <summary>Recalibrate</summary>
-<pre><code>// Paste your recalibrate code here
+<div class="code-description">
+  <strong>Purpose:</strong> Add a summary of what this function does here.<br>
+  <strong>Approach:</strong> Add a description of how you approached it here.
+</div>
+<pre><code class="language-cpp">// Paste your recalibrate code here
 </code></pre>
 </details>
 
 </div>
+
+<script>document.addEventListener('DOMContentLoaded', function() { hljs.highlightAll(); });</script>
 
 ## Challenges
 
