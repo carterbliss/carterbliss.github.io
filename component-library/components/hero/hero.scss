@@ -1,17 +1,17 @@
 /* Hero */
 .c-hero { $c: &;
-	padding: 48px 0 72px;
+	padding: 24px 0 40px;
 
 	@media only screen and (max-width: $desktop) {
-		padding: 36px 0 60px;
+		padding: 20px 0 32px;
 	}
 
 	@media only screen and (max-width: $tablet) {
-		padding: 24px 0 60px;
+		padding: 16px 0 40px;
 	}
 
 	@media only screen and (max-width: $mobile) {
-		padding: 16px 0 40px;
+		padding: 12px 0 28px;
 	}
 
 	&__inner {
@@ -48,15 +48,15 @@
 		
 		@media only screen and (max-width: 1130px) {
 			#{$c}__image {
-				width: 400px;
-				height: 420px;
+				width: 320px;
+				height: 340px;
 			}
 		}
 
 		@media only screen and (max-width: $desktop) {
 			#{$c}__image {
-				width: 340px;
-				height: 360px;
+				width: 280px;
+				height: 300px;
 			}
 		}
 
@@ -178,8 +178,8 @@
 	&__image {
 		position: relative;
 		z-index: 10;
-		width: 480px;
-		height: 520px;
+		width: 360px;
+		height: 380px;
 		margin-left: auto;
 
 		&::before {
