@@ -197,14 +197,14 @@ struct SteeringSystemData_s
 </div>
 <pre><code class="language-cpp">float SteeringSystem::_convert_digital_sensor(const uint32_t digital_raw) {
     // Same logic for digital
-    const int32_t offset = static_cast<int32_t>(digital_raw) - _steeringParams.digital_midpoint; //NOLINT
-    return static_cast<float>(offset) * _steeringParams.deg_per_count_digital;
+    const int32_t offset = static_cast&lt;int32_t&gt;(digital_raw) - _steeringParams.digital_midpoint; //NOLINT
+    return static_cast&lt;float&gt;(offset) * _steeringParams.deg_per_count_digital;
 }
 
 float SteeringSystem::_convert_analog_sensor(const uint32_t analog_raw) {
     // Get the raw value
-    const int32_t offset = static_cast<int32_t>(analog_raw) - _steeringParams.analog_midpoint; //NOLINT
-    return static_cast<float>(offset) * _steeringParams.deg_per_count_analog;
+    const int32_t offset = static_cast&lt;int32_t&gt;(analog_raw) - _steeringParams.analog_midpoint; //NOLINT
+    return static_cast&lt;float&gt;(offset) * _steeringParams.deg_per_count_analog;
 }
 </code></pre>
 </details>
@@ -215,11 +215,11 @@ float SteeringSystem::_convert_analog_sensor(const uint32_t analog_raw) {
   <strong>Approach:</strong> The out of range function determines if we are having an issue with either sensor, which then determines our output in evaluate steering. For this function, we check whether the recorded values are within the bounds we calibrated.
 </div>
 <pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_oor_analog(const uint32_t steering_analog_raw) { // RAW
-    return (static_cast<int32_t>(steering_analog_raw) < _steeringParams.analog_min_with_margins || static_cast<int32_t>(steering_analog_raw) > _steeringParams.analog_max_with_margins);
+    return (static_cast&lt;int32_t&gt;(steering_analog_raw) &lt; _steeringParams.analog_min_with_margins || static_cast&lt;int32_t&gt;(steering_analog_raw) &gt; _steeringParams.analog_max_with_margins);
 }
 
 bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digital_raw) {// RAW
-    return (static_cast<int32_t>(steering_digital_raw) < _steeringParams.digital_min_with_margins || static_cast<int32_t>(steering_digital_raw) > _steeringParams.digital_max_with_margins);
+    return (static_cast&lt;int32_t&gt;(steering_digital_raw) &lt; _steeringParams.digital_min_with_margins || static_cast&lt;int32_t&gt;(steering_digital_raw) &gt; _steeringParams.digital_max_with_margins);
 }
 </code></pre>
 </details>
@@ -230,7 +230,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
   <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function we check whether or not the change in angle is greater than the value in steering parameters. 
 </div>
 <pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_dtheta_exceeded(float dtheta){
-    return (fabs(dtheta) > _steeringParams.max_dtheta_threshold);
+    return (fabs(dtheta) &gt; _steeringParams.max_dtheta_threshold);
 }
 </code></pre>
 </details>
@@ -281,8 +281,8 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
         _steeringSystemData.dtheta_exceeded_digital = _evaluate_steering_dtheta_exceeded(dtheta_digital);
 
         //Check if either sensor is out of range (pass in raw)
-        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast<uint32_t>(analog_raw));
-        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast<uint32_t>(digital_raw)) || digital_fault;
+        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast&lt;uint32_t&gt;(analog_raw));
+        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast&lt;uint32_t&gt;(digital_raw)) || digital_fault;
 
         //Check if there is too much of a difference between sensor values
         float sensor_difference = std::fabs(_steeringSystemData.analog_steering_angle - _steeringSystemData.digital_steering_angle);
