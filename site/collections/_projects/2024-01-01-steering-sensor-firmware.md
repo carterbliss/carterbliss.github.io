@@ -2,7 +2,7 @@
 date: 2024-01-01
 title: Steering Sensor Firmware Design
 subtitle: HyTech Racing – Embedded Systems
-image: '/images/project-1.jpg'
+image: '/images/ht09.png'
 ---
 
 ## Overview
