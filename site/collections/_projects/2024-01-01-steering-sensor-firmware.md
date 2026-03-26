@@ -79,8 +79,8 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 <details>
 <summary>Initialize Variables</summary>
 <div class="code-description">
-  <strong>Purpose:</strong> Add a summary of what this function does here.<br>
-  <strong>Approach:</strong> Add a description of how you approached it here.
+  
+  <strong>Approach:</strong> To run plausability functions, range functions, and calibration functions, we need to establish two structs that will be used throughout the system. Our first struct is steering params, which essentially sets all relevant extremeties and important data points, such as the midpoint adc value. Our system data struct is used for real time sensor value input. These are the raw values we take from our steering sensor to input into our system's functions. 
 </div>
 <pre><code class="language-cpp">struct SteeringParams_s {
     // raw ADC input signals
@@ -145,10 +145,102 @@ struct SteeringSystemData_s
 <details>
 <summary>Recalibrate</summary>
 <div class="code-description">
-  <strong>Purpose:</strong> Add a summary of what this function does here.<br>
-  <strong>Approach:</strong> Add a description of how you approached it here.
+
+  <strong>Approach:</strong> For our steering system, we only recalibrate the digital sensor, since its data analysis means come from a magnet which can shift during motion. Therefore for this function we intake the digitals raw values, as well as a button on the steering wheel which triggers a recalibration. Our function then constantly reupdates relative extremeties, and once the button releases it will write those values to EEPROM (Later seen in vehicle control front tasks).
 </div>
-<pre><code class="language-cpp">// Paste your recalibrate code here
+<pre><code class="language-cpp">void SteeringSystem::recalibrate_steering_digital(const uint32_t analog_raw, const uint32_t digital_raw, bool calibration_is_on) {
+    //get current raw angles
+    const uint32_t curr_digital_raw = static_cast<uint32_t>(digital_raw); //NOLINT will eventually be uint32
+    
+    //button just pressed ->recalibration window
+    if (calibration_is_on && !_calibrating){
+        _calibrating = true;
+        _steeringParams.min_observed_digital = UINT32_MAX; //establishes a big number that will be greater than the readings
+        _steeringParams.max_observed_digital = 0;
+    }
+    
+    if (calibration_is_on && _calibrating) {
+        update_observed_steering_limits(analog_raw, digital_raw);
+    }
+
+
+    //button released -> commit the values
+    if (!calibration_is_on && _calibrating) {
+        _calibrating = false;
+        _steeringParams.min_steering_signal_digital = _steeringParams.min_observed_digital;
+        _steeringParams.max_steering_signal_digital = _steeringParams.max_observed_digital;
+        // swaps  min & max in the params if sensor is flipped
+        if (_steeringParams.min_steering_signal_digital > _steeringParams.max_steering_signal_digital)
+        {
+            std::swap(_steeringParams.min_steering_signal_digital,_steeringParams.max_steering_signal_digital);
+        }
+        _steeringParams.span_signal_digital = _steeringParams.max_steering_signal_digital-_steeringParams.min_steering_signal_digital;
+        _steeringParams.analog_tol_deg = static_cast<float>(_steeringParams.span_signal_analog) * _steeringParams.analog_tol * _steeringParams.deg_per_count_analog;
+        _steeringParams.digital_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
+        _steeringParams.analog_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
+        const int32_t analog_margin_counts = static_cast<int32_t>(_steeringParams.analog_tol * static_cast<float>(_steeringParams.span_signal_analog)); //NOLINT
+        const int32_t digital_margin_counts = static_cast<int32_t>(_steeringParams.digital_tol_deg /_steeringParams.deg_per_count_digital); //NOLINT
+        _steeringParams.analog_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_analog) - analog_margin_counts;
+        _steeringParams.analog_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_analog) + analog_margin_counts;
+        _steeringParams.digital_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_digital) - digital_margin_counts;
+        _steeringParams.digital_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_digital) + digital_margin_counts;
+        _steeringParams.error_between_sensors_tolerance = _steeringParams.analog_tol_deg + _steeringParams.digital_tol_deg;
+    } 
+}
+</code></pre>
+</details>
+
+<details>
+<summary>Converting Values</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of how you approached converting values here.
+</div>
+<pre><code class="language-cpp">// Paste your converting values code here
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluating Out of Range</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of how you evaluated out-of-range values here.
+</div>
+<pre><code class="language-cpp">// Paste your out-of-range evaluation code here
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluating Steering Speed</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of how you evaluated steering speed here.
+</div>
+<pre><code class="language-cpp">// Paste your steering speed evaluation code here
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate Steering</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of the overall steering evaluation logic here.
+</div>
+<pre><code class="language-cpp">// Paste your evaluate steering code here
+</code></pre>
+</details>
+
+<details>
+<summary>Vehicle Control Front Tasks</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of the vehicle control front task integration here.
+</div>
+<pre><code class="language-cpp">// Paste your vehicle control front tasks code here
+</code></pre>
+</details>
+
+<details>
+<summary>Unit Tests</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Add a description of your unit testing approach here.
+</div>
+<pre><code class="language-cpp">// Paste your unit tests code here
 </code></pre>
 </details>
 
