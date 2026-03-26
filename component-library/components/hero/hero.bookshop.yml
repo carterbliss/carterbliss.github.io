@@ -24,7 +24,7 @@ blueprint:
 # Overrides any fields in the blueprint when viewing this component in the component browser
 preview:
   title: Hi there, I am Carter Bliss
-  description_html: <strong>Multifaceted Engineer</strong> pursuing Bachelor's of Science in Electrical Engineering at <strong>Georgia Institute of Technology (GPA: 4.0, E.G: 2028)
+  description_html: <strong>Multifaceted Engineer</strong> pursuing Bachelor's of Science in Electrical Engineering at <strong>Georgia Institute of Technology <strong>GPA: 4.0, E.G: 2028</strong>
     </strong>. I work as a lifestyle, product, and
     landscape photographer, creating images for a diverse range of requests,
     from online media to printed artwork.
