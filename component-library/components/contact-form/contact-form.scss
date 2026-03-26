@@ -59,17 +59,17 @@
 		padding: 22px;
 		font-size: 16px;
 		font-weight: 500;
-		border: 1px solid $border-color;
+		border: 1px solid #30363d;
 		border-radius: 8px;
 		outline: none;
 		transition: $global-transition;
 		resize: vertical;
-		color: $text-color;
-		background: $background-color-alt;
+		color: #e6edf3;
+		background: #21262d;
 
 		&::placeholder {
 			font-weight: 500;
-			color: rgba($text-color, 0.3);
+			color: rgba(#e6edf3, 0.35);
 		}
 
 		&:focus {
