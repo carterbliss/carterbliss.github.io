@@ -320,11 +320,140 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 </details>
 
 <details>
-<summary>Vehicle Control Front Tasks</summary>
+<summary>VCF – Setup All Interfaces</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Add a description of the vehicle control front task integration here.
+  <strong>Approach:</strong> Before any tasks run, the vehicle's hardware peripherals need to be initialized and the steering system needs to be seeded with calibration data. Since the analog sensor is never recalibrated, its parameters are hard-coded constants. The digital sensor's limits, however, were written to EEPROM during a prior calibration run, so we read those back here to restore the steering system to the last known good state without requiring the driver to recalibrate on every power cycle.
 </div>
-<pre><code class="language-cpp">// Paste your vehicle control front tasks code here
+<pre><code class="language-cpp">void setup_all_interfaces() {
+    SPI.begin();
+    Serial.begin(VCFTaskConstants::SERIAL_BAUDRATE); // NOLINT
+    ADCInterfaceInstance::create(
+    // Initialize all singletons
+    ADCChannels_s {
+        VCFInterfaceConstants::STEERING_1_CHANNEL,
+        VCFInterfaceConstants::STEERING_2_CHANNEL,
+    },
+    ADCScales_s {
+        VCFInterfaceConstants::STEERING_1_SCALE,
+        VCFInterfaceConstants::STEERING_2_SCALE,
+    },
+    ADCOffsets_s {
+        VCFInterfaceConstants::STEERING_1_OFFSET,
+        VCFInterfaceConstants::STEERING_2_OFFSET,
+    });
+    EthernetIPDefsInstance::create();
+
+    SteeringParams_s steering_params = {
+        .min_steering_signal_analog = VCFSystemConstants::MIN_STEERING_SIGNAL_ANALOG,
+        .max_steering_signal_analog = VCFSystemConstants::MAX_STEERING_SIGNAL_ANALOG,
+        .min_steering_signal_digital = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::MIN_STEERING_SIGNAL_DIGITAL_ADDR),
+        .max_steering_signal_digital = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::MAX_STEERING_SIGNAL_DIGITAL_ADDR),
+        .analog_min_with_margins = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::ANALOG_MIN_WITH_MARGINS_ADDR),
+        .analog_max_with_margins = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::ANALOG_MAX_WITH_MARGINS_ADDR),
+        .digital_min_with_margins = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::DIGITAL_MIN_WITH_MARGINS_ADDR),
+        .digital_max_with_margins = EEPROMUtilities::read_eeprom_32bit(VCFSystemConstants::DIGITAL_MAX_WITH_MARGINS_ADDR),
+        .span_signal_analog = VCFSystemConstants::SPAN_SIGNAL_ANALOG,
+        .analog_midpoint = VCFSystemConstants::ANALOG_MIDPOINT,
+        .deg_per_count_analog = VCFSystemConstants::DEG_PER_COUNT_ANALOG,
+        .deg_per_count_digital = VCFSystemConstants::DEG_PER_COUNT_DIGITAL,
+        .analog_tol = VCFSystemConstants::ANALOG_TOL,
+        .digital_tol_deg = VCFSystemConstants::DIGITAL_TOL_DEG,
+        .max_dtheta_threshold = VCFSystemConstants::MAX_DTHETA_THRESHOLD,
+    };
+    steering_params.span_signal_digital = steering_params.max_steering_signal_digital - steering_params.min_steering_signal_digital;
+    steering_params.digital_midpoint = (steering_params.min_steering_signal_digital + steering_params.max_steering_signal_digital) / 2;
+    steering_params.analog_tol_deg = static_cast&lt;float&gt;(steering_params.span_signal_analog) * steering_params.analog_tol * steering_params.deg_per_count_analog;
+    steering_params.error_between_sensors_tolerance = steering_params.analog_tol_deg + steering_params.digital_tol_deg;
+
+    SteeringSystemInstance::create(steering_params);
+
+    // Create Digital Steering Sensor singleton
+    OrbisBRInstance::create(&Serial2);
+}
+</code></pre>
+</details>
+
+<details>
+<summary>VCF – Async Main Task</summary>
+<div class="code-description">
+  <strong>Approach:</strong> This task runs as fast as the scheduler allows and is responsible for keeping sensor data fresh. On each tick it drains the CAN receive ring buffer, samples the Orbis digital encoder, reads the analog ADC channel, then calls <code>evaluate_steering</code> with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
+</div>
+<pre><code class="language-cpp">namespace async_tasks
+{
+    void handle_async_CAN_receive() //NOLINT caps for CAN
+    {
+        VCFCANInterfaceObjects& vcf_interface_objects = VCFCANInterfaceImpl::VCFCANInterfaceObjectsInstance::instance();
+        CANInterfaces& vcf_can_interfaces = VCFCANInterfaceImpl::CANInterfacesInstance::instance();
+        process_ring_buffer(vcf_interface_objects.main_can_rx_buffer, vcf_can_interfaces, sys_time::hal_millis(), vcf_interface_objects.can_recv_switch, CANInterfaceType_e::TELEM);
+    }
+    void handle_async_recvs()
+    {
+        // ethernet, etc...
+        handle_async_CAN_receive();
+    }
+    HT_TASK::TaskResponse handle_async_main(const unsigned long& sys_micros, const HT_TASK::TaskInfo& task_info)
+    {
+        handle_async_recvs();
+        OrbisBRInstance::instance().sample();
+        const uint32_t analog_raw = static_cast&lt;uint32_t&gt;(ADCInterfaceInstance::instance().steering_degrees_cw().raw);
+        const SteeringEncoderConversion_s digital_data = OrbisBRInstance::instance().convert();
+        SteeringSystemInstance::instance().evaluate_steering(
+            analog_raw,
+            digital_data,
+            sys_time::hal_millis()
+        );
+
+        PedalsSystemInstance::instance().evaluate_pedals(
+            PedalsSystemInstance::instance().get_pedals_sensor_data(),
+            sys_time::hal_millis()
+        );
+        return HT_TASK::TaskResponse::YIELD;
+    }
+};
+</code></pre>
+</details>
+
+<details>
+<summary>VCF – Update Steering Calibration Task</summary>
+<div class="code-description">
+  <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires (currently a TODO placeholder), it calls <code>recalibrate_steering_digital</code> and then immediately persists every updated limit to EEPROM. Writing to EEPROM on trigger rather than on every tick prevents excessive wear on the memory cells while still guaranteeing the latest calibration survives a power cycle.
+</div>
+<pre><code class="language-cpp">HT_TASK::TaskResponse update_steering_calibration_task(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    const uint32_t analog_raw = SteeringSystemInstance::instance().get_steering_system_data().analog_raw;
+    const uint32_t digital_raw = SteeringSystemInstance::instance().get_steering_system_data().digital_raw;
+
+    SteeringSystemInstance::instance().update_observed_steering_limits(analog_raw, digital_raw);
+    if (false /* TODO: IMPORTANT ADD SOMETHING FOR TRIGGERING CALIBRATION*/) {
+        SteeringSystemInstance::instance().recalibrate_steering_digital(analog_raw, digital_raw, false /* TODO: calibration trigger or something*/);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MIN_STEERING_SIGNAL_DIGITAL_ADDR, SteeringSystemInstance::instance().get_steering_params().min_steering_signal_digital);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MAX_STEERING_SIGNAL_DIGITAL_ADDR, SteeringSystemInstance::instance().get_steering_params().max_steering_signal_digital);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::ANALOG_MIN_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().analog_min_with_margins);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::ANALOG_MAX_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().analog_max_with_margins);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::DIGITAL_MIN_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().digital_min_with_margins);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::DIGITAL_MAX_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().digital_max_with_margins);
+    }
+
+    return HT_TASK::TaskResponse::YIELD;
+}
+</code></pre>
+</details>
+
+<details>
+<summary>VCF – Enqueue Steering Data</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Once the steering system has produced a validated output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
+</div>
+<pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    STEERING_DATA_t msg_out;
+    SteeringSystemData_s steering_system_data = SteeringSystemInstance::instance().get_steering_system_data();
+    /* TODO: Change steering_*_raw to new values we have to add to CAN library. Also add other msg_out variables for implausibilities*/
+    msg_out.steering_analog_raw = steering_system_data.analog_steering_angle;
+    msg_out.steering_digital_raw = steering_system_data.digital_steering_angle; //NOLINT
+
+    CAN_util::enqueue_msg(&msg_out, &Pack_STEERING_DATA_hytech, VCFCANInterfaceImpl::VCFCANInterfaceObjectsInstance::instance().main_can_tx_buffer);
+    return HT_TASK::TaskResponse::YIELD;
+}
 </code></pre>
 </details>
 
