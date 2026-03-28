@@ -2,7 +2,7 @@
 date: 2024-01-03
 title: Brake-Light PCB
 subtitle: HyTech Racing – PCB Design
-image: '/images/project-3.jpg'
+image: '/images/brakelight-pcb.png'
 ---
 
 ## Overview
