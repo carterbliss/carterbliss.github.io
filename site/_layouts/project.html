@@ -5,8 +5,10 @@ layout: default
 <div class="container">
 
   {% bookshop page-heading title=page.title description=page.subtitle %}
+  {% unless page.hide_page_image %}
   {% assign page_image = site.baseurl | append: page.image %}
   {% bookshop page-image image=page_image %}
+  {% endunless %}
 
   <div class="page animate">
     {{ content }}
