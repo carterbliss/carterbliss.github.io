@@ -463,20 +463,19 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
   <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome — <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected.
 </div>
 <pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
-#include <gtest/gtest.h>
-#include <string>
+#include &lt;gtest/gtest.h&gt;
+#include &lt;string&gt;
 #include "SteeringSystem.h"
 #include "SharedFirmwareTypes.h"
-#include <array>
-
-#include <iostream>
+#include &lt;array&gt;
+#include &lt;iostream&gt;
 
 SteeringParams_s gen_default_params(){
     SteeringParams_s params{};
     //hard code the parmas for sensors
     params.min_steering_signal_analog = 1024;
     params.max_steering_signal_analog = 3071;//actual hard coded
-    
+
     params.min_steering_signal_digital = 25;
     params.max_steering_signal_digital = 8000; //testing values
 
@@ -498,29 +497,26 @@ SteeringParams_s gen_default_params(){
 
     params.digital_midpoint = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
     params.analog_midpoint = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
-   
-    
-    const int32_t analog_margin_counts = static_cast<int32_t>(params.analog_tol * static_cast<float>(params.span_signal_analog));
-    const int32_t digital_margin_counts = static_cast<int32_t>(params.digital_tol_deg / params.deg_per_count_digital);
-    
-    params.analog_min_with_margins = static_cast<int32_t>(params.min_steering_signal_analog) - analog_margin_counts;
-    params.analog_max_with_margins = static_cast<int32_t>(params.max_steering_signal_analog) + analog_margin_counts;
-    params.digital_min_with_margins = static_cast<int32_t>(params.min_steering_signal_digital) - digital_margin_counts;
-    params.digital_max_with_margins = static_cast<int32_t>(params.max_steering_signal_digital) + digital_margin_counts;
+
+    const int32_t analog_margin_counts = static_cast&lt;int32_t&gt;(params.analog_tol * static_cast&lt;float&gt;(params.span_signal_analog));
+    const int32_t digital_margin_counts = static_cast&lt;int32_t&gt;(params.digital_tol_deg / params.deg_per_count_digital);
+
+    params.analog_min_with_margins = static_cast&lt;int32_t&gt;(params.min_steering_signal_analog) - analog_margin_counts;
+    params.analog_max_with_margins = static_cast&lt;int32_t&gt;(params.max_steering_signal_analog) + analog_margin_counts;
+    params.digital_min_with_margins = static_cast&lt;int32_t&gt;(params.min_steering_signal_digital) - digital_margin_counts;
+    params.digital_max_with_margins = static_cast&lt;int32_t&gt;(params.max_steering_signal_digital) + digital_margin_counts;
     return params;
 }
 
 void debug_print_steering(const SteeringSystemData_s& data){
-    std::cout<<"analog_steering_angle: "<<data.analog_steering_angle<<" deg\n";
-    std::cout<<"digital_steering_angle: "<<data.digital_steering_angle<<" deg\n";
-    std::cout<<"output_steering_angle: "<<data.output_steering_angle<<" deg\n";
-    std::cout<<"analog_oor_implausibility: "<<data.analog_oor_implausibility<<"\n";
-    std::cout<<"digital_oor_implausibility: "<<data.digital_oor_implausibility<<"\n";
-    std::cout<<"sensor_disagreement_implausibility: "<<data.sensor_disagreement_implausibility<<"\n";
-    std::cout<<"dtheta_exceeded_analog: "<<data.dtheta_exceeded_analog<<"\n";
-    std::cout<<"dtheta_exceeded_digital: "<<data.dtheta_exceeded_digital<<"\n";
-    
-
+    std::cout &lt;&lt; "analog_steering_angle: "  &lt;&lt; data.analog_steering_angle &lt;&lt; " deg\n";
+    std::cout &lt;&lt; "digital_steering_angle: " &lt;&lt; data.digital_steering_angle &lt;&lt; " deg\n";
+    std::cout &lt;&lt; "output_steering_angle: "  &lt;&lt; data.output_steering_angle &lt;&lt; " deg\n";
+    std::cout &lt;&lt; "analog_oor_implausibility: "          &lt;&lt; data.analog_oor_implausibility &lt;&lt; "\n";
+    std::cout &lt;&lt; "digital_oor_implausibility: "         &lt;&lt; data.digital_oor_implausibility &lt;&lt; "\n";
+    std::cout &lt;&lt; "sensor_disagreement_implausibility: " &lt;&lt; data.sensor_disagreement_implausibility &lt;&lt; "\n";
+    std::cout &lt;&lt; "dtheta_exceeded_analog: "  &lt;&lt; data.dtheta_exceeded_analog &lt;&lt; "\n";
+    std::cout &lt;&lt; "dtheta_exceeded_digital: " &lt;&lt; data.dtheta_exceeded_digital &lt;&lt; "\n";
 }
 
 TEST(SteeringSystemTesting, test_adc_to_degree_conversion)
@@ -530,52 +526,47 @@ TEST(SteeringSystemTesting, test_adc_to_degree_conversion)
 
     uint32_t analog_mid = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
     uint32_t digital_mid = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
-    
+
     //midpoints
     SteeringSensorData_s midpoint{};
     midpoint.analog_steering_degrees = analog_mid;
     midpoint.digital_steering_analog = digital_mid;
     steering.evaluate_steering(midpoint, 1000);
     auto data = steering.get_steering_system_data();
-    EXPECT_NEAR(data.analog_steering_angle, 0.0f, 0.001f); 
+    EXPECT_NEAR(data.analog_steering_angle, 0.0f, 0.001f);
     EXPECT_NEAR(data.digital_steering_angle, 0.0f, 0.001f);
 
     //min values
     SteeringSensorData_s min_val{};
     min_val.analog_steering_degrees = params.min_steering_signal_analog;
     min_val.digital_steering_analog = params.min_steering_signal_digital;
-    
     steering.evaluate_steering(min_val, 1010);
     data = steering.get_steering_system_data();
 
-    float expected_analog_min = (static_cast<int32_t>(params.min_steering_signal_analog) - static_cast<int32_t>(analog_mid)) * params.deg_per_count_analog;
-    float expected_digital_min = (static_cast<int32_t>(params.min_steering_signal_digital) - static_cast<int32_t>(digital_mid)) * params.deg_per_count_digital;
-
-    EXPECT_NEAR(data.analog_steering_angle, expected_analog_min, 0.001f); 
-    EXPECT_NEAR(data.digital_steering_angle, expected_digital_min, 0.001f); 
+    float expected_analog_min = (static_cast&lt;int32_t&gt;(params.min_steering_signal_analog) - static_cast&lt;int32_t&gt;(analog_mid)) * params.deg_per_count_analog;
+    float expected_digital_min = (static_cast&lt;int32_t&gt;(params.min_steering_signal_digital) - static_cast&lt;int32_t&gt;(digital_mid)) * params.deg_per_count_digital;
+    EXPECT_NEAR(data.analog_steering_angle, expected_analog_min, 0.001f);
+    EXPECT_NEAR(data.digital_steering_angle, expected_digital_min, 0.001f);
 
     //max values
     SteeringSensorData_s max_val{};
     max_val.analog_steering_degrees = params.max_steering_signal_analog;
     max_val.digital_steering_analog = params.max_steering_signal_digital;
-
     steering.evaluate_steering(max_val, 1020);
     data = steering.get_steering_system_data();
-    float expected_analog_max = (static_cast<int32_t>(params.max_steering_signal_analog) - static_cast<int32_t>(analog_mid)) * params.deg_per_count_analog;
-    float expected_digital_max = (static_cast<int32_t>(params.max_steering_signal_digital) - static_cast<int32_t>(digital_mid)) * params.deg_per_count_digital;
 
-    EXPECT_NEAR(data.analog_steering_angle, expected_analog_max, 0.001f); 
-    EXPECT_NEAR(data.digital_steering_angle, expected_digital_max, 0.001f); 
-    
+    float expected_analog_max = (static_cast&lt;int32_t&gt;(params.max_steering_signal_analog) - static_cast&lt;int32_t&gt;(analog_mid)) * params.deg_per_count_analog;
+    float expected_digital_max = (static_cast&lt;int32_t&gt;(params.max_steering_signal_digital) - static_cast&lt;int32_t&gt;(digital_mid)) * params.deg_per_count_digital;
+    EXPECT_NEAR(data.analog_steering_angle, expected_analog_max, 0.001f);
+    EXPECT_NEAR(data.digital_steering_angle, expected_digital_max, 0.001f);
 }
 
-TEST(SteeringSystemTesting,test_sensor_output_logic){
+TEST(SteeringSystemTesting, test_sensor_output_logic){
     auto params = gen_default_params();
-    
 
     uint32_t analog_mid = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
     uint32_t digital_mid = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
-        
+
 {
     //When both valid and agreeing, we default to digital
     SteeringSystem steering(params);
@@ -584,14 +575,11 @@ TEST(SteeringSystemTesting,test_sensor_output_logic){
     both_valid.digital_steering_analog = digital_mid;
     steering.evaluate_steering(both_valid, 1000);
     steering.evaluate_steering(both_valid, 1100);
-
     auto data = steering.get_steering_system_data();
-    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); //probably same problem, recheck after fix
-    EXPECT_FALSE(data.both_sensors_fail); //fail
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f);
+    EXPECT_FALSE(data.both_sensors_fail);
     EXPECT_FALSE(data.sensor_disagreement_implausibility);
 }
-    // Prevent dtheta exceeded for the next test
-    
 {
     //When both valid but disagreeing, we default to digital
     SteeringSystem steering(params);
@@ -599,13 +587,12 @@ TEST(SteeringSystemTesting,test_sensor_output_logic){
     both_valid_disagree.analog_steering_degrees = analog_mid;
     both_valid_disagree.digital_steering_analog = digital_mid+3000; //large offset from analog
     steering.evaluate_steering(both_valid_disagree, 1000);
-    steering.evaluate_steering(both_valid_disagree, 1100); 
+    steering.evaluate_steering(both_valid_disagree, 1100);
     auto data = steering.get_steering_system_data();
-
     EXPECT_TRUE(data.sensor_disagreement_implausibility);
-    EXPECT_FALSE(data.analog_oor_implausibility); //actual true, expected false
-    EXPECT_FALSE(data.digital_oor_implausibility); //actual true, expected false
-    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); 
+    EXPECT_FALSE(data.analog_oor_implausibility);
+    EXPECT_FALSE(data.digital_oor_implausibility);
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f);
 }
 {
     //When analog is good but digital is bad, we put analog
@@ -617,8 +604,8 @@ TEST(SteeringSystemTesting,test_sensor_output_logic){
     steering.evaluate_steering(digital_bad, 1100);
     auto data = steering.get_steering_system_data();
     EXPECT_TRUE(data.digital_oor_implausibility);
-    EXPECT_FALSE(data.analog_oor_implausibility); //actual true, expected false 
-    EXPECT_NEAR(data.output_steering_angle, data.analog_steering_angle, 0.001f); //propgated
+    EXPECT_FALSE(data.analog_oor_implausibility);
+    EXPECT_NEAR(data.output_steering_angle, data.analog_steering_angle, 0.001f);
 }
 {
     //When digital is good but analog is bad, we put digital
@@ -630,11 +617,11 @@ TEST(SteeringSystemTesting,test_sensor_output_logic){
     steering.evaluate_steering(analog_bad, 1005);
     auto data = steering.get_steering_system_data();
     EXPECT_TRUE(data.analog_oor_implausibility);
-    EXPECT_FALSE(data.digital_oor_implausibility); //actual true, expected false
-    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); //propagated from 253
+    EXPECT_FALSE(data.digital_oor_implausibility);
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f);
 }
 {
-    //When both bad, we flagging that error
+    //When both bad, we flag that error
     SteeringSystem steering(params);
     SteeringSensorData_s both_bad {};
     both_bad.analog_steering_degrees = params.max_steering_signal_analog + 1000;
@@ -653,10 +640,7 @@ TEST(SteeringSystemTesting,test_sensor_output_logic){
 
 <script>document.addEventListener('DOMContentLoaded', function() { hljs.highlightAll(); });</script>
 
-## Challenges
-
-One of the main challenges was ensuring the sensor readings remained accurate and noise-free under the electromagnetic interference present in a high-voltage EV environment. This required both hardware-level shielding considerations and software-side filtering algorithms.
 
 ## Outcome
 
-The firmware was successfully integrated into the car's sensor suite and validated through both bench testing and on-track data collection, contributing to improved vehicle control and telemetry accuracy.
+Put the video of getting output values here. 
