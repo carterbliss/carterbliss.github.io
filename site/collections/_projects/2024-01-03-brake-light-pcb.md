@@ -135,19 +135,17 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
     <img src="/images/routing-overlay.png" alt="Bottom overlay layer" style="width:100%; border-radius:6px; border:1px solid #30363d;">
     <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">Bottom Overlay</figcaption>
   </figure>
-</div>
-</details>
-
-</div>
-
-<figure style="margin:24px 0 0; text-align:center;">
+<figure style="margin:16px 0 0; text-align:center;">
   <img src="/images/drc-report.png" alt="Altium DRC report" style="width:100%; border-radius:6px; border:1px solid #30363d;">
   <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Design Rule Check — The single rule violation flagged is a board outline trace width of 8.835 mils, which falls below the 10 mil minimum. This is a known exception: the board outline is not a functional trace and carries no current, so this violation is tolerated and has no impact on the board's performance.</figcaption>
 </figure>
-<figure style="margin:16px 0 0; text-align:center;">
+<figure style="margin:16px 0; text-align:center;">
   <img src="/images/drc-violations.png" alt="DRC violation breakdown" style="width:100%; border-radius:6px; border:1px solid #30363d;">
   <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Board Clearance Constraint violation — 8.835 mils, below the 10 mil rule but tolerated for the board outline.</figcaption>
 </figure>
+</details>
+
+</div>
 
 ## Outcome
 
