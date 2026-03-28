@@ -643,4 +643,6 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 ## Outcome
 
-Put the video of getting output values here. 
+[Description coming soon]
+
+[Video coming soon]
