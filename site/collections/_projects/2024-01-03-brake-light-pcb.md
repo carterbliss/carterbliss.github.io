@@ -80,8 +80,11 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
 <details>
 <summary>Schematic Symbol – LM555 Timer</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Add your description here — e.g. how you read the datasheet, what pins you defined, how you verified the symbol against the electrical spec]
+  <strong>Approach:</strong> For this project, I had to create the LM555 timer component from scratch. My first step was to study the <a href="https://www.ti.com/lit/ds/symlink/lm555.pdf" target="_blank" style="color:#58a6ff;">LM555 datasheet</a> and note each pin's electrical role and current requirements, since those determined how pins should be grouped on the symbol. The goal wasn't to mirror the datasheet's example layout — it was to arrange pins in a way that makes the schematic easy to read and minimizes the passive components needed around it, while following HyTech's electrical style guide for consistency across the library.
+  <br><br>
+  Pin placement was driven by function. <strong>VCC and RESET</strong> are grouped together on the top right because neither cares about a precise voltage reading — they just need a logic high to be active, so keeping them adjacent makes it easy to tie RESET high without long traces. <strong>THRESHOLD and TRIGGER</strong> are placed next to each other on the left because they operate on the same current thresholds (2/3 and 1/3 of VCC respectively) and work as a pair to set and reset the internal flip-flop — grouping them together reflects how they're used in the timing circuit. <strong>DISCHARGE</strong> sits just above them rather than alongside, because although it's related to the timing cycle, it sources a slightly different current path through the external RC network and needs its own clearance to route cleanly. <strong>OUTPUT</strong> and <strong>CONTROL VOLTAGE</strong> are placed on the right, with output prominent since it's the primary signal we care about, and control voltage available for fine-tuning the timing threshold if needed. <strong>GND</strong> anchors the bottom left as a stable reference point for the whole symbol.
 </div>
+<img src="/images/lm555-symbol.png" alt="LM555 schematic symbol" style="width:100%; max-width:420px; display:block; margin:16px 20px; border-radius:6px; border:1px solid #30363d;">
 </details>
 
 <details>
