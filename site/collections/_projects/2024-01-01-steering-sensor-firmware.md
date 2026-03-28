@@ -322,7 +322,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>VCF – Setup All Interfaces</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Before any tasks run, the vehicle's hardware peripherals need to be initialized and the steering system needs to be seeded with calibration data. Since the analog sensor is never recalibrated, its parameters are hard-coded constants. The digital sensor's limits, however, were written to EEPROM during a prior calibration run, so we read those back here to restore the steering system to the last known good state without requiring the driver to recalibrate on every power cycle.
+  <strong>Approach:</strong> Before any tasks run, the vehicle's hardware peripherals need to be initialized and the steering system needs to be seeded with calibration data. Since the analog sensor is never recalibrated, its parameters are hard-coded constants. The digital sensor's limits, however, were written to EEPROM during the prior calibration run, so we read those back here to restore the steering system to the last known good state without requiring the driver to recalibrate on every power cycle.
 </div>
 <pre><code class="language-cpp">void setup_all_interfaces() {
     SPI.begin();
@@ -376,7 +376,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>VCF – Async Main Task</summary>
 <div class="code-description">
-  <strong>Approach:</strong> This task runs as fast as the scheduler allows and is responsible for keeping sensor data fresh. On each tick it drains the CAN receive ring buffer, samples the Orbis digital encoder, reads the analog ADC channel, then calls <code>evaluate_steering</code> with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
+  <strong>Approach:</strong> This task runs as fast as the scheduler allows and is responsible for keeping sensor data fresh. On each tick it samples the Orbis digital encoder, reads the analog ADC channel, then calls <code>evaluate_steering</code> with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
 </div>
 <pre><code class="language-cpp">namespace async_tasks
 {
@@ -416,7 +416,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>VCF – Update Steering Calibration Task</summary>
 <div class="code-description">
-  <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires (currently a TODO placeholder), it calls <code>recalibrate_steering_digital</code> and then immediately persists every updated limit to EEPROM. Writing to EEPROM on trigger rather than on every tick prevents excessive wear on the memory cells while still guaranteeing the latest calibration survives a power cycle.
+  <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires, it calls <code>recalibrate_steering_digital</code> and then writes every updated limit to EEPROM..
 </div>
 <pre><code class="language-cpp">HT_TASK::TaskResponse update_steering_calibration_task(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     const uint32_t analog_raw = SteeringSystemInstance::instance().get_steering_system_data().analog_raw;
@@ -441,7 +441,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>VCF – Enqueue Steering Data</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Once the steering system has produced a validated output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
+  <strong>Approach:</strong> Once the steering system its validated output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
 </div>
 <pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
@@ -460,9 +460,192 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Unit Tests</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Add a description of your unit testing approach here.
+  <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome — <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected.
 </div>
-<pre><code class="language-cpp">// Paste your unit tests code here
+<pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
+#include <gtest/gtest.h>
+#include <string>
+#include "SteeringSystem.h"
+#include "SharedFirmwareTypes.h"
+#include <array>
+
+#include <iostream>
+
+SteeringParams_s gen_default_params(){
+    SteeringParams_s params{};
+    //hard code the parmas for sensors
+    params.min_steering_signal_analog = 1024;
+    params.max_steering_signal_analog = 3071;//actual hard coded
+    
+    params.min_steering_signal_digital = 25;
+    params.max_steering_signal_digital = 8000; //testing values
+
+    params.span_signal_analog = 4095;
+    params.span_signal_digital = 8000;
+
+    params.min_observed_digital = 2000;
+    params.max_observed_digital = 6000;
+
+    params.deg_per_count_analog = 0.087890625f;
+    params.deg_per_count_digital = 0.02197265625f;
+
+    params.analog_tol = 0.005f;
+    params.analog_tol_deg = 0.11377778f;
+    params.digital_tol_deg = 0.2f;
+
+    params.max_dtheta_threshold = 5.0f;//change
+    params.error_between_sensors_tolerance = 0.31377778f;
+
+    params.digital_midpoint = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
+    params.analog_midpoint = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
+   
+    
+    const int32_t analog_margin_counts = static_cast<int32_t>(params.analog_tol * static_cast<float>(params.span_signal_analog));
+    const int32_t digital_margin_counts = static_cast<int32_t>(params.digital_tol_deg / params.deg_per_count_digital);
+    
+    params.analog_min_with_margins = static_cast<int32_t>(params.min_steering_signal_analog) - analog_margin_counts;
+    params.analog_max_with_margins = static_cast<int32_t>(params.max_steering_signal_analog) + analog_margin_counts;
+    params.digital_min_with_margins = static_cast<int32_t>(params.min_steering_signal_digital) - digital_margin_counts;
+    params.digital_max_with_margins = static_cast<int32_t>(params.max_steering_signal_digital) + digital_margin_counts;
+    return params;
+}
+
+void debug_print_steering(const SteeringSystemData_s& data){
+    std::cout<<"analog_steering_angle: "<<data.analog_steering_angle<<" deg\n";
+    std::cout<<"digital_steering_angle: "<<data.digital_steering_angle<<" deg\n";
+    std::cout<<"output_steering_angle: "<<data.output_steering_angle<<" deg\n";
+    std::cout<<"analog_oor_implausibility: "<<data.analog_oor_implausibility<<"\n";
+    std::cout<<"digital_oor_implausibility: "<<data.digital_oor_implausibility<<"\n";
+    std::cout<<"sensor_disagreement_implausibility: "<<data.sensor_disagreement_implausibility<<"\n";
+    std::cout<<"dtheta_exceeded_analog: "<<data.dtheta_exceeded_analog<<"\n";
+    std::cout<<"dtheta_exceeded_digital: "<<data.dtheta_exceeded_digital<<"\n";
+    
+
+}
+
+TEST(SteeringSystemTesting, test_adc_to_degree_conversion)
+{
+    auto params = gen_default_params();
+    SteeringSystem steering(params);
+
+    uint32_t analog_mid = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
+    uint32_t digital_mid = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
+    
+    //midpoints
+    SteeringSensorData_s midpoint{};
+    midpoint.analog_steering_degrees = analog_mid;
+    midpoint.digital_steering_analog = digital_mid;
+    steering.evaluate_steering(midpoint, 1000);
+    auto data = steering.get_steering_system_data();
+    EXPECT_NEAR(data.analog_steering_angle, 0.0f, 0.001f); 
+    EXPECT_NEAR(data.digital_steering_angle, 0.0f, 0.001f);
+
+    //min values
+    SteeringSensorData_s min_val{};
+    min_val.analog_steering_degrees = params.min_steering_signal_analog;
+    min_val.digital_steering_analog = params.min_steering_signal_digital;
+    
+    steering.evaluate_steering(min_val, 1010);
+    data = steering.get_steering_system_data();
+
+    float expected_analog_min = (static_cast<int32_t>(params.min_steering_signal_analog) - static_cast<int32_t>(analog_mid)) * params.deg_per_count_analog;
+    float expected_digital_min = (static_cast<int32_t>(params.min_steering_signal_digital) - static_cast<int32_t>(digital_mid)) * params.deg_per_count_digital;
+
+    EXPECT_NEAR(data.analog_steering_angle, expected_analog_min, 0.001f); 
+    EXPECT_NEAR(data.digital_steering_angle, expected_digital_min, 0.001f); 
+
+    //max values
+    SteeringSensorData_s max_val{};
+    max_val.analog_steering_degrees = params.max_steering_signal_analog;
+    max_val.digital_steering_analog = params.max_steering_signal_digital;
+
+    steering.evaluate_steering(max_val, 1020);
+    data = steering.get_steering_system_data();
+    float expected_analog_max = (static_cast<int32_t>(params.max_steering_signal_analog) - static_cast<int32_t>(analog_mid)) * params.deg_per_count_analog;
+    float expected_digital_max = (static_cast<int32_t>(params.max_steering_signal_digital) - static_cast<int32_t>(digital_mid)) * params.deg_per_count_digital;
+
+    EXPECT_NEAR(data.analog_steering_angle, expected_analog_max, 0.001f); 
+    EXPECT_NEAR(data.digital_steering_angle, expected_digital_max, 0.001f); 
+    
+}
+
+TEST(SteeringSystemTesting,test_sensor_output_logic){
+    auto params = gen_default_params();
+    
+
+    uint32_t analog_mid = (params.min_steering_signal_analog + params.max_steering_signal_analog) / 2;
+    uint32_t digital_mid = (params.min_steering_signal_digital + params.max_steering_signal_digital) / 2;
+        
+{
+    //When both valid and agreeing, we default to digital
+    SteeringSystem steering(params);
+    SteeringSensorData_s both_valid {};
+    both_valid.analog_steering_degrees = analog_mid;
+    both_valid.digital_steering_analog = digital_mid;
+    steering.evaluate_steering(both_valid, 1000);
+    steering.evaluate_steering(both_valid, 1100);
+
+    auto data = steering.get_steering_system_data();
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); //probably same problem, recheck after fix
+    EXPECT_FALSE(data.both_sensors_fail); //fail
+    EXPECT_FALSE(data.sensor_disagreement_implausibility);
+}
+    // Prevent dtheta exceeded for the next test
+    
+{
+    //When both valid but disagreeing, we default to digital
+    SteeringSystem steering(params);
+    SteeringSensorData_s both_valid_disagree {};
+    both_valid_disagree.analog_steering_degrees = analog_mid;
+    both_valid_disagree.digital_steering_analog = digital_mid+3000; //large offset from analog
+    steering.evaluate_steering(both_valid_disagree, 1000);
+    steering.evaluate_steering(both_valid_disagree, 1100); 
+    auto data = steering.get_steering_system_data();
+
+    EXPECT_TRUE(data.sensor_disagreement_implausibility);
+    EXPECT_FALSE(data.analog_oor_implausibility); //actual true, expected false
+    EXPECT_FALSE(data.digital_oor_implausibility); //actual true, expected false
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); 
+}
+{
+    //When analog is good but digital is bad, we put analog
+    SteeringSystem steering(params);
+    SteeringSensorData_s digital_bad {};
+    digital_bad.analog_steering_degrees = analog_mid;
+    digital_bad.digital_steering_analog = params.max_steering_signal_digital + 1000; //bad digital
+    steering.evaluate_steering(digital_bad, 1000);
+    steering.evaluate_steering(digital_bad, 1100);
+    auto data = steering.get_steering_system_data();
+    EXPECT_TRUE(data.digital_oor_implausibility);
+    EXPECT_FALSE(data.analog_oor_implausibility); //actual true, expected false 
+    EXPECT_NEAR(data.output_steering_angle, data.analog_steering_angle, 0.001f); //propgated
+}
+{
+    //When digital is good but analog is bad, we put digital
+    SteeringSystem steering(params);
+    SteeringSensorData_s analog_bad {};
+    analog_bad.analog_steering_degrees = params.max_steering_signal_analog + 1000;
+    analog_bad.digital_steering_analog = digital_mid;
+    steering.evaluate_steering(analog_bad, 1000);
+    steering.evaluate_steering(analog_bad, 1005);
+    auto data = steering.get_steering_system_data();
+    EXPECT_TRUE(data.analog_oor_implausibility);
+    EXPECT_FALSE(data.digital_oor_implausibility); //actual true, expected false
+    EXPECT_NEAR(data.output_steering_angle, data.digital_steering_angle, 0.001f); //propagated from 253
+}
+{
+    //When both bad, we flagging that error
+    SteeringSystem steering(params);
+    SteeringSensorData_s both_bad {};
+    both_bad.analog_steering_degrees = params.max_steering_signal_analog + 1000;
+    both_bad.digital_steering_analog = params.max_steering_signal_digital + 1000;
+    steering.evaluate_steering(both_bad, 1000);
+    steering.evaluate_steering(both_bad, 1005);
+    auto data = steering.get_steering_system_data();
+    EXPECT_TRUE(data.analog_oor_implausibility);
+    EXPECT_TRUE(data.digital_oor_implausibility);
+    EXPECT_TRUE(data.both_sensors_fail);
+}
 </code></pre>
 </details>
 
