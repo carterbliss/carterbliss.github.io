@@ -101,13 +101,16 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
 <details>
 <summary>Resistor & Capacitor Circuit Layout</summary>
 <div class="code-description">
-  <strong>Approach:</strong> With all components in the library, the next step was wiring the full circuit. The LM555 is configured in astable mode, meaning it continuously oscillates to flash the LEDs rather than requiring an external trigger. The timing is set by <strong>R1 (43kΩ)</strong> and <strong>R2 (332kΩ)</strong> feeding into <strong>C1 (1µF)</strong> — these values were calculated using the LM555 astable frequency formula to hit the target flash rate. R1 connects between VCC and DISCHARGE, while R2 bridges DISCHARGE down to THRESHOLD and TRIGGER, which are shorted together as required in astable mode. C1 then completes the timing network to GND.
+  <strong>Approach:</strong> With all components in the library, the next step was wiring the full circuit. The LM555 is configured to continuously oscillate to flash the LEDs rather than requiring an external trigger. The timing is set by <strong>R1 (43kΩ)</strong> and <strong>R2 (332kΩ)</strong> feeding into <strong>C1 (1µF)</strong> — these values were calculated using fundamental formulae such as <strong> Voltage = Resistance * Current and Capacitace = Charge stored / Voltage. </strong> R1 connects between VCC and DISCHARGE, while R2 bridges DISCHARGE down to THRESHOLD and TRIGGER, which are shorted together. C1 then completes the timing network to GND.
   <br><br>
   The OUTPUT pin drives six <strong>0603 LEDs</strong> through a <strong>50Ω current-limiting resistor (RL1)</strong>, sized to keep each LED within its rated forward current at 5V. VCC and RESET are both tied directly to the +5V rail — RESET is held high so the timer runs freely without any interrupt.
   <br><br>
-  Two decoupling capacitors handle noise. <strong>C2 (0.01µF)</strong> sits on the CONTROL VOLTAGE pin, which is the internal reference for the comparators inside the 555 — without it, supply noise can shift the timing thresholds and cause jitter in the flash rate. <strong>C4 (1µF)</strong> is a bulk decoupling capacitor on the +5V rail itself, placed close to VCC to suppress any transient dips when the LEDs switch on and off.
+  <strong>C2 (0.01µF)</strong> decouples the CONTROL VOLTAGE pin, and <strong>C4 (1µF)</strong> decouples the +5V rail — both suppress noise that could otherwise affect timing stability.
+  <br><br>
+  The power source is a <strong>USB4110GFA USB-C connector (J1)</strong>. VBUS is wired directly to the +5V rail, and all GND and shield pins are tied to ground. The data lines (DP, DN, SBU) are left unconnected since only power is needed. <strong>R3 and R4 (both 5.1kΩ)</strong> are pull-down resistors on the CC1 and CC2 pins — this is the standard USB-C configuration for a power sink, signaling to the host that the device wants to draw up to 900mA at 5V. <strong>C3 (0.1µF)</strong> decouples the VBUS line at the connector to filter any noise coming in from the cable.
 </div>
-<img src="/images/brakelight-schematic.png" alt="Brake light RC circuit schematic" style="width:100%; display:block; margin:16px 20px 16px 0; border-radius:6px; border:1px solid #30363d;">
+<img src="/images/brakelight-schematic.png" alt="Brake light RC circuit schematic" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
+<img src="/images/brakelight-usbc.png" alt="USB-C power circuit schematic" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
 </details>
 
 <details>
