@@ -90,7 +90,11 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
 <details>
 <summary>8-SOIC Footprint</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Add your description here — e.g. how you derived pad dimensions from the SOIC-8 package spec, courtyard clearances, silkscreen placement]
+  <strong>Approach:</strong> The LM555 comes in a single characterized package — the 8-SOIC — so the footprint was straightforward to recreate from the datasheet dimensions. I set the grid to 100 mils and placed eight rectangular top-layer pads with matching spacing and sizing. Following HyTech's electrical style guide, I added a mechanical layer 13 outline inside the pad area to mark the IC body boundary, and a mechanical layer 15 outline around the full footprint to indicate the keepout and center cross. A orientation dot was added to the top left corner to assist alignment when soldering. The final step was sourcing a 3D model from Mouser and attaching it to the footprint, giving a visual reference for the assembled board. With the footprint complete, all the components needed to begin the RC circuit layout were in place.
+</div>
+<div style="display:flex; gap:16px; margin:16px 20px;">
+  <img src="/images/soic-footprint.png" alt="8-SOIC footprint layout" style="width:50%; border-radius:6px; border:1px solid #30363d; object-fit:cover;">
+  <img src="/images/soic-footprint-3d.png" alt="8-SOIC 3D model" style="width:50%; border-radius:6px; border:1px solid #30363d; object-fit:cover;">
 </div>
 </details>
 
