@@ -116,7 +116,25 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
 <details>
 <summary>Routing</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Add your description here — e.g. trace width choices, keeping power traces away from signal lines, design rule checks]
+  <strong>Approach:</strong> The routing goal is straightforward — connect every component to the correct net: power to power, GND to GND. My approach was to orient all GND pads toward the outside of the board first, then perform a GND copper pour across the entire board. The pour floods all outer copper area and ties every GND pad together automatically, giving current a continuous return path without manually routing each one.
+  <br><br>
+  Trace width was set to 5 mil rather than the typical 10 mil — the board is small and the components are simple enough that this was sufficient without risking current capacity issues. The LEDs are placed on the top layer for a clean appearance, so vias were used to bring power up from the bottom layer to the top-layer LED pads.
+  <br><br>
+  Getting to zero DRC errors required iteration. My first mistake was placing components without a routing plan, which led to conflicts that were hard to untangle. Once I shifted to a systematic approach — orient GND pads, pour GND, then route power traces inward — the process became much cleaner. A common error I hit was silk-to-solder-mask violations, where a component's reference label on the bottom overlay was overlapping a pad. These were resolved by simply relocating the labels. After working through all violations, the board passed the FSAE & HyTech DRC with 0 errors.
+</div>
+<div style="display:flex; gap:12px; margin:16px 0;">
+  <figure style="margin:0; width:33%; text-align:center;">
+    <img src="/images/routing-top.png" alt="Top copper layer" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">Top Layer</figcaption>
+  </figure>
+  <figure style="margin:0; width:33%; text-align:center;">
+    <img src="/images/routing-bottom.png" alt="Bottom copper layer" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">Bottom Layer</figcaption>
+  </figure>
+  <figure style="margin:0; width:33%; text-align:center;">
+    <img src="/images/routing-overlay.png" alt="Bottom overlay layer" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">Bottom Overlay</figcaption>
+  </figure>
 </div>
 </details>
 
