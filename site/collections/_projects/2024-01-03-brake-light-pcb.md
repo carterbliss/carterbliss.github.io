@@ -151,4 +151,16 @@ Timer was chosen to be LM555, requiring me to research the datasheet, create an 
 
 ## Outcome
 
-[Video coming soon]
+After manufacturing and soldering, the board performed exactly as designed. Plugging into a USB-C power source immediately drives the LM555 timer into astable oscillation, flashing all six LEDs at the programmed rate without any additional configuration. The compact form factor and puzzle-piece cutout are visible in the assembled photo below.
+
+<figure style="margin:16px 0; text-align:center;">
+  <img src="/images/brakelight-assembled.jpg" alt="Assembled brake light PCB" style="width:100%; max-width:480px; border-radius:8px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Assembled PCB</figcaption>
+</figure>
+
+<figure style="margin:16px 0; text-align:center;">
+  <video controls style="width:100%; max-width:480px; border-radius:8px; border:1px solid #30363d;">
+    <source src="/assets/brakelight-demo.mp4" type="video/mp4">
+  </video>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">LEDs flashing on USB-C power</figcaption>
+</figure>
