@@ -7,6 +7,6 @@ menu__settings:
     - title: 'Projects'
       url: '/#projects'
     - title: 'Learn About Me'
-      url: '/about/'
+      url: '/#about'
     - title: 'Resume'
       url: '/assets/resume.pdf'
