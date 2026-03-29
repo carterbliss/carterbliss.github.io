@@ -83,6 +83,13 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
 </details>
 
 <details>
+<summary>Constant Current Design</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Add your constant current charging design description here]
+</div>
+</details>
+
+<details>
 <summary>Switches</summary>
 <div class="code-description">
   <strong>Approach:</strong> The switching system controls when the supercapacitor charges and discharges. The timing is driven by <strong>V3 (VPULSE)</strong>, a pulse wave monitor (PWM) configured as PULSE(0 3.3 0 1u 1u 650m 1300m): meaning it switches between 0V and 3.3V with a 650ms on-time and a 1300ms period. This pulse signal drives <strong>Q3 (NMOS)</strong>, which acts as the discharge switch, connecting the discharge path to the discharging circuit when the pulse is high. <strong>Q4 (PMOS)</strong> is the complementary switch that handles the charge path, turning on when Q3 is off. <strong>R5 (9kΩ)</strong> sits in the gate drive path to limit current during switching transitions. Currently the PWM is a spice directive from a modified voltage source, for our fabricated PCB this will be driven by our microcontroller coded with rust. 
@@ -98,6 +105,13 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
     <img src="/images/supercap-switch2.png" alt="Comparator charge control" style="width:100%; border-radius:6px; border:1px solid #30363d;">
     <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">LM193 comparator controlling charge cutoff</figcaption>
   </figure>
+</div>
+</details>
+
+<details>
+<summary>Monitor Current & Monitor Voltage</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Add your current and voltage monitoring description here]
 </div>
 </details>
 
