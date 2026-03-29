@@ -85,7 +85,19 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
 <details>
 <summary>Switches</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Add your switches description here]
+  <strong>Approach:</strong> The switching system controls when the supercapacitor charges and discharges. The timing is driven by <strong>V3 (VPULSE)</strong>, a pulse wave generator configured as PULSE(0 3.3 0 1u 1u 650m 1300m) — meaning it switches between 0V and 3.3V with a 650ms on-time and a 1300ms period. This pulse signal drives <strong>Q3 (NMOS)</strong>, which acts as the low-side discharge switch, connecting the discharge path to GND when the pulse is high. <strong>Q4 (PMOS)</strong> is the complementary high-side switch that handles the charge path, turning on when Q3 is off. <strong>R5 (9kΩ)</strong> sits in the gate drive path to limit current during switching transitions.
+  <br><br>
+  The second part of the switching system uses an <strong>LM193 comparator (U6)</strong> to monitor the supercapacitor voltage (Vcap on <strong>C2, 1.6µF</strong>). The comparator watches whether the cap voltage has reached its target and controls <strong>Q5 (PMOS)</strong> accordingly — once the capacitor is fully charged, the comparator output switches and Q5 cuts off the charge current. This prevents overcharging and ensures each discharge cycle starts from the same voltage, which is critical for consistent capacitance measurements. <strong>V4 (3.3V)</strong> supplies the comparator and PMOS gate logic.
+</div>
+<div style="display:flex; gap:16px; margin:16px 0;">
+  <figure style="margin:0; width:50%; text-align:center;">
+    <img src="/images/supercap-switch1.png" alt="Pulse switch circuit" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">VPULSE driver with NMOS/PMOS switches</figcaption>
+  </figure>
+  <figure style="margin:0; width:50%; text-align:center;">
+    <img src="/images/supercap-switch2.png" alt="Comparator charge control" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">LM193 comparator controlling charge cutoff</figcaption>
+  </figure>
 </div>
 </details>
 
