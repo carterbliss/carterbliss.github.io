@@ -1,5 +1,5 @@
 ---
-date: 2024-01-02
+date: 2026-03-26
 title: Supercapacitor IC
 subtitle: Circuit Design – Power Electronics
 image: '/images/supercap-cover.png'
