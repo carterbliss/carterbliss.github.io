@@ -4,6 +4,8 @@ footer_menu__settings:
       url: '/'
     - title: 'Projects'
       url: '/#projects'
+    - title: 'Career'
+      url: '/#career'
     - title: 'About'
       url: '/#about'
 

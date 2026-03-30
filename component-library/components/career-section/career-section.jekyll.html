@@ -1,0 +1,32 @@
+<!-- begin career-section -->
+{% assign c = "c-career" %}
+<section class="{{c}} animate" id="career">
+  <div class="container">
+
+    <h2 class="{{c}}__title">{{ include.title }}</h2>
+
+    {% if include.intro_html %}
+    <div class="{{c}}__intro">{{ include.intro_html }}</div>
+    {% endif %}
+
+    <div class="{{c}}__columns">
+      <div class="{{c}}__col">
+        <h3 class="{{c}}__col-title">{{ include.goals_title }}</h3>
+        <div class="{{c}}__col-body">{{ include.goals_html }}</div>
+      </div>
+      <div class="{{c}}__col">
+        <h3 class="{{c}}__col-title">{{ include.coursework_title }}</h3>
+        <ul class="{{c}}__course-list">
+          {% for course in include.courses %}
+          <li class="{{c}}__course-item">
+            <span class="{{c}}__course-name">{{ course.name }}</span>
+            {% if course.note %}<span class="{{c}}__course-note">{{ course.note }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+<!-- end career-section -->
