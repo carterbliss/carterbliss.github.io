@@ -123,8 +123,15 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
 <details>
 <summary>Monitor Current & Monitor Voltage</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Add your current and voltage monitoring description here]
+  <strong>Approach:</strong> To calculate capacitance (C = I × Δt / ΔV), the microcontroller needs to continuously read both the current through and the voltage across the supercapacitor. These two monitoring subunits each condition their respective signal into a clean ADC-readable voltage and route it to the microcontroller's flash memory for logging.
+  <br><br>
+  <strong>Current monitoring — INA282 (IC2):</strong> The INA282 is a high-side current sense amplifier with a fixed gain of 50 V/V. A shunt resistor <strong>R4 (300Ω)</strong> is placed in series with the high-side input; as current flows through it, a small differential voltage develops across IN+ and IN−. The INA282 amplifies this by 50× and adds a reference offset set by the <strong>R9 (23.2kΩ) / R10 (10kΩ)</strong> voltage divider from +5V: V_REF1 = 5V × 10k / (23.2k + 10k) ≈ 1.51V. Offsetting the output around 1.51V allows the ADC to read bidirectional current without the output going negative. For example, at 10µA: V_shunt = 10µA × 300Ω = 3mV, so V_out = 50 × 3mV + 1.51V = 1.66V — well within the ADC's input range. The output is filtered by <strong>R11 (1kΩ)</strong> and <strong>C4</strong> forming a low-pass RC filter before reaching <strong>ADC_INPUT_1</strong>, suppressing any switching noise.
+  <br><br>
+  <strong>Voltage monitoring — MCP1501 (U2):</strong> The MCP1501-33xSN is a precision voltage reference/buffer that reads the supercapacitor voltage (Vcap on <strong>C2, 1.6µF</strong>) and presents it as a stable, low-impedance signal to the ADC. This prevents the ADC's input impedance from loading the capacitor and disturbing the measurement. Its output passes through <strong>R8 (20Ω)</strong> and <strong>C3</strong> — another RC low-pass filter — before reaching <strong>ADC_INPUT_2</strong>. The SHDN pin allows the microcontroller to power down the reference when a reading isn't needed, reducing idle current draw.
+  <br><br>
+  Both ADC_INPUT_1 and ADC_INPUT_2 are sampled by the microcontroller during the discharge phase. The readings are timestamped and written to flash, giving the software everything it needs to calculate capacitance from the slope of the voltage curve at known current.
 </div>
+<img src="/images/supercap-monitor.png" alt="Current and voltage monitoring circuit" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
 </details>
 
 <details>
