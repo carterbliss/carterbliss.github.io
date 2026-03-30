@@ -90,8 +90,15 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
   What makes this chip well-suited for the task is that it internally adjusts its impedance to compensate for whatever resistance the capacitor presents as its voltage rises during charging — keeping the current flat throughout the full charge cycle regardless of the changing load.
   <br><br>
   However, this behavior introduces a risk: once the capacitor is fully charged, the LM334Z has no awareness of that state and will continue trying to source current, which can drive the capacitor voltage above its rated limit. This is why the backup comparator described in the Switches section exists — it monitors the capacitor voltage and cuts off the charge path before any overvoltage can occur.
+
+  Since the LM334Z relies on an external component model that KiCad's SPICE engine cannot simulate directly, running a transient analysis on the schematic as-is produces no result. To validate the behavior, the LM334Z is swapped out for an <strong>IDC</strong> — an ideal current source symbol built into SPICE — set to output 10µA. This is purely a simulation stand-in: the IDC has no physical counterpart on the PCB, but it lets us confirm that a 10µA source will behave correctly with the rest of the circuit before committing to the real chip.
 </div>
 <img src="/images/supercap-cc.png" alt="LM334Z constant current charging circuit" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
+<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The simulation confirms it: <strong style="color:#c9d1d9;">I(R1) holds flat at exactly 10µA</strong> across the entire run, showing that the IDC — and by extension the LM334Z it represents — delivers perfectly constant current into the capacitor regardless of how the capacitor voltage changes over time.</p>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-idc-sim.png" alt="IDC constant current simulation" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation with IDC — I(R1) = 10µA flat, validating constant current through the capacitor</figcaption>
+</figure>
 </details>
 
 <details>
