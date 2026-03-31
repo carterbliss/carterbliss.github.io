@@ -73,13 +73,26 @@
     }
   }
 
+  &__course-group-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $text-color;
+    margin: 20px 0 8px;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+  }
+
   &__course-list {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 0 0 4px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   &__course-item {
@@ -87,10 +100,22 @@
     justify-content: space-between;
     align-items: baseline;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: $background-color-alt;
     border-radius: 8px;
     border-left: 3px solid $primary-color;
+
+    &--current {
+      border-left-color: $primary-color;
+    }
+
+    &--past {
+      border-left-color: #3fb950;
+    }
+
+    &--future {
+      border-left-color: #8b949e;
+    }
   }
 
   &__course-name {

@@ -16,14 +16,43 @@
       </div>
       <div class="{{c}}__col">
         <h3 class="{{c}}__col-title">{{ include.coursework_title }}</h3>
+
+        {% if include.courses_current %}
+        <p class="{{c}}__course-group-label">Current</p>
         <ul class="{{c}}__course-list">
-          {% for course in include.courses %}
-          <li class="{{c}}__course-item">
+          {% for course in include.courses_current %}
+          <li class="{{c}}__course-item {{c}}__course-item--current">
             <span class="{{c}}__course-name">{{ course.name }}</span>
             {% if course.note %}<span class="{{c}}__course-note">{{ course.note }}</span>{% endif %}
           </li>
           {% endfor %}
         </ul>
+        {% endif %}
+
+        {% if include.courses_past %}
+        <p class="{{c}}__course-group-label">Past</p>
+        <ul class="{{c}}__course-list">
+          {% for course in include.courses_past %}
+          <li class="{{c}}__course-item {{c}}__course-item--past">
+            <span class="{{c}}__course-name">{{ course.name }}</span>
+            {% if course.note %}<span class="{{c}}__course-note">{{ course.note }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if include.courses_future %}
+        <p class="{{c}}__course-group-label">Future</p>
+        <ul class="{{c}}__course-list">
+          {% for course in include.courses_future %}
+          <li class="{{c}}__course-item {{c}}__course-item--future">
+            <span class="{{c}}__course-name">{{ course.name }}</span>
+            {% if course.note %}<span class="{{c}}__course-note">{{ course.note }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
       </div>
     </div>
 
