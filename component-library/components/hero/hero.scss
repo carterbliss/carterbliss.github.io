@@ -127,18 +127,18 @@
 		}
 
 		ul {
-			margin: 14px 0 0;
+			margin: 10px 0 0;
 			padding-left: 0;
 			list-style: none;
 			display: flex;
 			flex-direction: column;
-			gap: 6px;
+			gap: 3px;
 
 			li {
-				font-size: 15px;
-				line-height: 1.5;
+				font-size: 13px;
+				line-height: 1.4;
 				color: $text-color;
-				padding-left: 16px;
+				padding-left: 14px;
 				position: relative;
 
 				&::before {
@@ -146,10 +146,6 @@
 					position: absolute;
 					left: 0;
 					color: $primary-color;
-				}
-
-				@media only screen and (max-width: $desktop) {
-					font-size: 14px;
 				}
 			}
 		}
