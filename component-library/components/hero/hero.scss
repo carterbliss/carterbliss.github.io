@@ -1,9 +1,9 @@
 /* Hero */
 .c-hero { $c: &;
-	padding: 24px 0 40px;
+	padding: 16px 0 24px;
 
 	@media only screen and (max-width: $desktop) {
-		padding: 20px 0 32px;
+		padding: 14px 0 20px;
 	}
 
 	@media only screen and (max-width: $tablet) {
@@ -117,28 +117,28 @@
 	&__description {
 		p {
 			margin-bottom: 0;
-			font-size: 18px;
-			line-height: 1.6;
+			font-size: 16px;
+			line-height: 1.5;
 			color: $text-color;
 
 			@media only screen and (max-width: $desktop) {
-				font-size: 16px;
+				font-size: 15px;
 			}
 		}
 
 		ul {
-			margin: 10px 0 0;
+			margin: 6px 0 0;
 			padding-left: 0;
 			list-style: none;
 			display: flex;
 			flex-direction: column;
-			gap: 3px;
+			gap: 1px;
 
 			li {
-				font-size: 13px;
+				font-size: 12px;
 				line-height: 1.4;
 				color: $text-color;
-				padding-left: 14px;
+				padding-left: 12px;
 				position: relative;
 
 				&::before {
@@ -154,7 +154,7 @@
 	&__btn {
 		display: flex;
 		align-items: center;
-		margin-top: 40px;
+		margin-top: 24px;
 
 		.cta-button {
 			margin-right: 8px;
