@@ -73,62 +73,54 @@
     }
   }
 
-  &__course-group-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: $text-color;
-    margin: 20px 0 8px;
+  &__coursework {
+    .course-group-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: $text-color;
+      margin: 20px 0 8px;
 
-    &:first-of-type {
-      margin-top: 0;
-    }
-  }
-
-  &__course-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  &__course-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    padding: 10px 14px;
-    background: $background-color-alt;
-    border-radius: 8px;
-    border-left: 3px solid $primary-color;
-
-    &--current {
-      border-left-color: $primary-color;
+      &:first-child {
+        margin-top: 0;
+      }
     }
 
-    &--past {
-      border-left-color: #3fb950;
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    &--future {
-      border-left-color: #8b949e;
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 10px 14px;
+      background: $background-color-alt;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: $heading-font-color;
+      line-height: 1.4;
+      border-left: 3px solid $primary-color;
+
+      &.current { border-left-color: $primary-color; }
+      &.past    { border-left-color: #3fb950; }
+      &.future  { border-left-color: #8b949e; }
+
+      span {
+        font-size: 13px;
+        font-weight: 400;
+        color: $text-color;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
     }
-  }
-
-  &__course-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: $heading-font-color;
-    line-height: 1.4;
-  }
-
-  &__course-note {
-    font-size: 13px;
-    color: $text-color;
-    white-space: nowrap;
-    flex-shrink: 0;
   }
 }
