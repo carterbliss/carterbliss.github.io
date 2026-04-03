@@ -1,0 +1,80 @@
+/* Custom cursor */
+*, *::before, *::after {
+  cursor: none !important;
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+  // offset so the center of each element sits on the cursor
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  background: $primary-color;
+  transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
+}
+
+.cursor-ring {
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
+  border: 1.5px solid rgba($primary-color, 0.6);
+  background: transparent;
+  transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease,
+              border-color 0.2s ease, opacity 0.2s ease;
+}
+
+// Hover state: dot shrinks to nothing, ring expands
+.cursor-dot.cursor--hover {
+  width: 0;
+  height: 0;
+  margin-left: 0;
+  margin-top: 0;
+  opacity: 0;
+}
+
+.cursor-ring.cursor--hover {
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  margin-top: -24px;
+  border-color: rgba($primary-color, 0.9);
+}
+
+// Click state: both compress briefly
+.cursor-dot.cursor--click {
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+}
+
+.cursor-ring.cursor--click {
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+}
+
+// Hide on touch/mobile
+@media (hover: none) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+
+  *, *::before, *::after {
+    cursor: auto !important;
+  }
+}
