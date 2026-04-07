@@ -74,9 +74,21 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // Native pointer cursor style injected on link hover
+  // SVG hand cursor with matching blue gradient
+  const svgHand = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">'
+    + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+    + '<stop offset="0%" stop-color="#90CAF9"/>'
+    + '<stop offset="45%" stop-color="#2196F3"/>'
+    + '<stop offset="100%" stop-color="#0D47A1"/>'
+    + '</linearGradient>'
+    + '<filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0D47A1" flood-opacity="0.5"/></filter>'
+    + '</defs>'
+    + '<path d="M9,0 L14,0 L14,16 Q18,11 21,16 L21,22 Q24,15 27,22 L27,36 L3,36 L3,22 Q0,18 3,15 Q6,11 9,16 Z" fill="url(#g)" filter="url(#s)"/>'
+    + '</svg>';
   const pointerStyleEl = document.createElement('style');
-  pointerStyleEl.textContent = 'a, button, [role="button"], .c-button { cursor: pointer !important; }';
+  pointerStyleEl.textContent = 'a,button,[role="button"],.c-button{cursor:url("data:image/svg+xml,'
+    + encodeURIComponent(svgHand)
+    + '") 9 0,pointer !important;}';
 
   // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
