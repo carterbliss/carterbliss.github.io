@@ -28,27 +28,14 @@
 
   // ── Arrow cursor element ───────────────────────────────────
   const arrow = document.createElement('div');
-  const ARROW_BASE = [
+  const ARROW_STYLE = [
     'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
     'will-change:transform',
     'transition:opacity 0.15s ease',
-    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))'
-  ].join(';');
-
-  // Arrow shape: tip at exact (0,0) top-left
-  const ARROW_STYLE = [
-    ARROW_BASE,
+    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))',
     'width:20px', 'height:26px',
     'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
     'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
-  ].join(';');
-
-  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
-  const POINTER_STYLE = [
-    ARROW_BASE,
-    'width:22px', 'height:28px',
-    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
   ].join(';');
 
   arrow.style.cssText = ARROW_STYLE;
@@ -74,22 +61,79 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // Native pointer cursor style injected on link hover
+  // ── Pointer cursor: load hand image, colorize white fill to blue ──
+  // Uses canvas pixel manipulation:
+  //   1. Flood-fill from corners → mark background white pixels
+  //   2. Remaining white pixels are interior fill → colorize to blue gradient
+  //   3. Background → transparent; output as CSS cursor data URL
   const pointerStyleEl = document.createElement('style');
-  pointerStyleEl.textContent = 'a, button, [role="button"], .c-button { cursor: pointer !important; }';
+  document.head.appendChild(pointerStyleEl);
+
+  const handImg = new Image();
+  handImg.onload = function () {
+    const W = 44, H = 54;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = W; offscreen.height = H;
+    const cx = offscreen.getContext('2d');
+    cx.drawImage(handImg, 0, 0, W, H);
+
+    const imageData = cx.getImageData(0, 0, W, H);
+    const d = imageData.data;
+
+    // Flood-fill from corners through light pixels to mark background
+    const visited = new Uint8Array(W * H);
+    const stack = [0, W - 1, (H - 1) * W, H * W - 1];
+    while (stack.length) {
+      const idx = stack.pop();
+      if (idx < 0 || idx >= W * H || visited[idx]) continue;
+      visited[idx] = 1;
+      const r = d[idx * 4], g = d[idx * 4 + 1], b = d[idx * 4 + 2];
+      if (r < 160 || g < 160 || b < 160) continue; // stop at dark outline
+      const x = idx % W, y = Math.floor(idx / W);
+      if (x > 0)   stack.push(idx - 1);
+      if (x < W-1) stack.push(idx + 1);
+      if (y > 0)   stack.push(idx - W);
+      if (y < H-1) stack.push(idx + W);
+    }
+
+    // Recolor pixels
+    for (let i = 0; i < W * H; i++) {
+      const pi = i * 4;
+      if (visited[i]) {
+        // Background → transparent
+        d[pi] = d[pi+1] = d[pi+2] = d[pi+3] = 0;
+      } else {
+        const brightness = (d[pi] + d[pi+1] + d[pi+2]) / (3 * 255);
+        if (brightness > 0.55) {
+          // White fill → blue gradient (135deg: top-left #90CAF9, bottom-right #0D47A1)
+          const t = ((i % W) / W + Math.floor(i / W) / H) / 2;
+          d[pi]   = Math.round(144 + (13  - 144) * t); // R: 144→13
+          d[pi+1] = Math.round(202 + (71  - 202) * t); // G: 202→71
+          d[pi+2] = Math.round(249 + (161 - 249) * t); // B: 249→161
+          d[pi+3] = 255;
+        }
+        // else: dark pixels (black outline) stay unchanged
+      }
+    }
+
+    cx.putImageData(imageData, 0, 0);
+    const url = offscreen.toDataURL();
+    // Hotspot: fingertip is roughly center-top of the hand image
+    const hx = Math.round(W / 2), hy = 2;
+    pointerStyleEl.textContent =
+      'a,button,[role="button"],.c-button{cursor:url("' + url + '") ' + hx + ' ' + hy + ',pointer!important;}';
+  };
+  handImg.src = '/assets/hand-cursor.png';
 
   // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.style.opacity = '0';
-      document.head.appendChild(pointerStyleEl);
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      if (pointerStyleEl.parentNode) pointerStyleEl.parentNode.removeChild(pointerStyleEl);
     }
   });
 
@@ -101,19 +145,15 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    // Evict expired points
     while (trail.length && now - trail[0].t > TRAIL_LIFETIME) trail.shift();
 
-    // Smooth bezier trail through midpoints
     if (trail.length >= 3) {
       for (let i = 1; i < trail.length - 1; i++) {
         const p0 = trail[i - 1], p1 = trail[i], p2 = trail[i + 1];
         const mx0 = (p0.x + p1.x) / 2, my0 = (p0.y + p1.y) / 2;
         const mx1 = (p1.x + p2.x) / 2, my1 = (p1.y + p2.y) / 2;
-
         const freshness = 1 - (now - p1.t) / TRAIL_LIFETIME;
-        const g         = Math.round(freshness * 200);
-
+        const g = Math.round(freshness * 200);
         ctx.beginPath();
         ctx.moveTo(mx0, my0);
         ctx.quadraticCurveTo(p1.x, p1.y, mx1, my1);
@@ -126,7 +166,7 @@
     }
 
     arrow.style.transform = `translate(${mouse.x}px,${mouse.y}px)`;
-    if (!isPointer) arrow.style.opacity = visible ? '1' : '0';
+    arrow.style.opacity   = (visible && !isPointer) ? '1' : '0';
 
     requestAnimationFrame(render);
   }
