@@ -74,17 +74,22 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
+  // Native pointer cursor style injected on link hover
+  const pointerStyleEl = document.createElement('style');
+  pointerStyleEl.textContent = 'a, button, [role="button"], .c-button { cursor: pointer !important; }';
+
   // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.style.cssText = POINTER_STYLE;
+      arrow.style.opacity = '0';
+      document.head.appendChild(pointerStyleEl);
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      arrow.style.cssText = ARROW_STYLE;
+      if (pointerStyleEl.parentNode) pointerStyleEl.parentNode.removeChild(pointerStyleEl);
     }
   });
 
@@ -120,10 +125,8 @@
       }
     }
 
-    // Fingertip offset: arrow tip is at (0,0); pointer tip is at center-top (-11px)
-    const offsetX = isPointer ? -11 : 0;
-    arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
-    arrow.style.opacity   = visible ? '1' : '0';
+    arrow.style.transform = `translate(${mouse.x}px,${mouse.y}px)`;
+    if (!isPointer) arrow.style.opacity = visible ? '1' : '0';
 
     requestAnimationFrame(render);
   }
