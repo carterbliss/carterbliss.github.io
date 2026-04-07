@@ -2,16 +2,24 @@
   // Skip on touch devices
   if (window.matchMedia('(hover: none)').matches) return;
 
+  // ── Inject cursor: none so the OS cursor hides ─────────────
+  const styleEl = document.createElement('style');
+  styleEl.textContent = [
+    '*, *::before, *::after { cursor: none !important; }',
+    '@media (hover: none) { *, *::before, *::after { cursor: auto !important; } }'
+  ].join('');
+  document.head.appendChild(styleEl);
+
   // ── Trail canvas ───────────────────────────────────────────
   const canvas = document.createElement('canvas');
-  canvas.className = 'cursor-trail-canvas';
+  canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:99998;';
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
   function resizeCanvas() {
-    const dpr       = window.devicePixelRatio || 1;
-    canvas.width    = window.innerWidth  * dpr;
-    canvas.height   = window.innerHeight * dpr;
+    const dpr         = window.devicePixelRatio || 1;
+    canvas.width      = window.innerWidth  * dpr;
+    canvas.height     = window.innerHeight * dpr;
     canvas.style.width  = window.innerWidth  + 'px';
     canvas.style.height = window.innerHeight + 'px';
   }
@@ -20,13 +28,36 @@
 
   // ── Arrow cursor element ───────────────────────────────────
   const arrow = document.createElement('div');
-  arrow.className = 'cursor-arrow';
+  const ARROW_BASE = [
+    'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
+    'will-change:transform',
+    'transition:opacity 0.15s ease',
+    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))'
+  ].join(';');
+
+  // Arrow shape: tip at exact (0,0) top-left
+  const ARROW_STYLE = [
+    ARROW_BASE,
+    'width:20px', 'height:26px',
+    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
+    'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
+  ].join(';');
+
+  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
+  const POINTER_STYLE = [
+    ARROW_BASE,
+    'width:22px', 'height:28px',
+    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
+    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
+  ].join(';');
+
+  arrow.style.cssText = ARROW_STYLE;
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
-  const TRAIL_LIFETIME = 450; // ms each point lives
-  const MIN_DIST       = 3;   // px — skip points too close together
-  const trail          = [];  // [{ x, y, t }]
+  const TRAIL_LIFETIME = 450;
+  const MIN_DIST       = 3;
+  const trail          = [];
   let mouse            = { x: -200, y: -200 };
   let visible          = false;
   let isPointer        = false;
@@ -43,17 +74,17 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // ── Pointer state (links / buttons) ───────────────────────
+  // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.classList.add('cursor--pointer');
+      arrow.style.cssText = POINTER_STYLE;
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      arrow.classList.remove('cursor--pointer');
+      arrow.style.cssText = ARROW_STYLE;
     }
   });
 
@@ -62,34 +93,26 @@
     const now = Date.now();
     const dpr = window.devicePixelRatio || 1;
 
-    // Scale context to physical pixels for crisp rendering
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    // Evict expired trail points
+    // Evict expired points
     while (trail.length && now - trail[0].t > TRAIL_LIFETIME) trail.shift();
 
-    // Draw smooth bezier trail through midpoints
+    // Smooth bezier trail through midpoints
     if (trail.length >= 3) {
       for (let i = 1; i < trail.length - 1; i++) {
-        const p0 = trail[i - 1];
-        const p1 = trail[i];
-        const p2 = trail[i + 1];
+        const p0 = trail[i - 1], p1 = trail[i], p2 = trail[i + 1];
+        const mx0 = (p0.x + p1.x) / 2, my0 = (p0.y + p1.y) / 2;
+        const mx1 = (p1.x + p2.x) / 2, my1 = (p1.y + p2.y) / 2;
 
-        // Midpoints between consecutive trail points
-        const mx0 = (p0.x + p1.x) / 2;
-        const my0 = (p0.y + p1.y) / 2;
-        const mx1 = (p1.x + p2.x) / 2;
-        const my1 = (p1.y + p2.y) / 2;
-
-        const age       = (now - p1.t) / TRAIL_LIFETIME; // 0=fresh, 1=expired
-        const freshness = 1 - age;
-        const g         = Math.round(freshness * 200);   // 200=light grey, 0=black
+        const freshness = 1 - (now - p1.t) / TRAIL_LIFETIME;
+        const g         = Math.round(freshness * 200);
 
         ctx.beginPath();
         ctx.moveTo(mx0, my0);
-        ctx.quadraticCurveTo(p1.x, p1.y, mx1, my1);     // smooth bezier
-        ctx.strokeStyle = `rgba(${g}, ${g}, ${g}, ${freshness * 0.75})`;
+        ctx.quadraticCurveTo(p1.x, p1.y, mx1, my1);
+        ctx.strokeStyle = `rgba(${g},${g},${g},${freshness * 0.75})`;
         ctx.lineWidth   = 1 + freshness * 2.5;
         ctx.lineCap     = 'round';
         ctx.lineJoin    = 'round';
@@ -97,9 +120,9 @@
       }
     }
 
-    // Arrow tip at (0,0) of div; pointer finger tip at center-top (offset -11px)
+    // Fingertip offset: arrow tip is at (0,0); pointer tip is at center-top (-11px)
     const offsetX = isPointer ? -11 : 0;
-    arrow.style.transform = `translate(${mouse.x + offsetX}px, ${mouse.y}px)`;
+    arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
 
     requestAnimationFrame(render);
@@ -114,40 +137,27 @@
 
   document.addEventListener('mousemove', (e) => {
     let closest = null, closestDist = Infinity;
-
     magnetEls().forEach((el) => {
       const rect = el.getBoundingClientRect();
       const cx   = rect.left + rect.width  / 2;
       const cy   = rect.top  + rect.height / 2;
       const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-      if (dist < MAG_RADIUS && dist < closestDist) {
-        closestDist = dist;
-        closest     = el;
-      }
+      if (dist < MAG_RADIUS && dist < closestDist) { closestDist = dist; closest = el; }
     });
-
     if (closest !== magnetTarget) {
-      if (magnetTarget) {
-        magnetTarget.style.transform  = '';
-        magnetTarget.style.transition = 'transform 0.4s ease';
-      }
+      if (magnetTarget) { magnetTarget.style.transform = ''; magnetTarget.style.transition = 'transform 0.4s ease'; }
       magnetTarget = closest;
     }
-
     if (magnetTarget) {
       const rect = magnetTarget.getBoundingClientRect();
-      const dx   = (e.clientX - (rect.left + rect.width  / 2)) * 0.25;
-      const dy   = (e.clientY - (rect.top  + rect.height / 2)) * 0.25;
+      const dx = (e.clientX - (rect.left + rect.width  / 2)) * 0.25;
+      const dy = (e.clientY - (rect.top  + rect.height / 2)) * 0.25;
       magnetTarget.style.transition = 'transform 0.15s ease';
-      magnetTarget.style.transform  = `translate(${dx}px, ${dy}px) scale(1.06)`;
+      magnetTarget.style.transform  = `translate(${dx}px,${dy}px) scale(1.06)`;
     }
   });
 
   document.addEventListener('mouseleave', () => {
-    if (magnetTarget) {
-      magnetTarget.style.transform  = '';
-      magnetTarget.style.transition = 'transform 0.4s ease';
-      magnetTarget = null;
-    }
+    if (magnetTarget) { magnetTarget.style.transform = ''; magnetTarget.style.transition = 'transform 0.4s ease'; magnetTarget = null; }
   });
 })();
