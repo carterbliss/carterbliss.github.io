@@ -34,18 +34,27 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%);
   }
 
-  // Pointer finger — shown when hovering links / buttons
-  // Tip stays at (0%, 0%) so positioning logic is unchanged
-  // Shape: narrow fingertip at top-left, widens into a palm/hand body
+  // Pointer hand — shown when hovering links / buttons
+  // Index finger extended upward, tip at center-top (50%, 0%).
+  // JS offsets the div by -11px so the fingertip lands on the mouse position.
   &.cursor--pointer {
-    width: 20px;
-    height: 26px;
+    width: 22px;
+    height: 28px;
     clip-path: polygon(
-      0% 0%, 24% 0%, 24% 36%,
-      80% 36%, 88% 55%, 80% 100%,
-      4% 100%, 0% 55%
+      36%  0%,              // left of fingertip
+      64%  0%,              // right of fingertip
+      64%  43%,             // right side of finger → palm join
+      82%  43%,             // right outer knuckle (other fingers)
+      91%  57%,             // right palm edge
+      91%  86%,             // lower right palm
+      82% 100%,             // bottom right (rounded approx)
+      18% 100%,             // bottom left
+       9%  86%,             // lower left palm
+       9%  57%,             // left palm edge
+      18%  43%,             // left outer knuckle
+      36%  43%              // left side of finger → palm join
     );
-    background: linear-gradient(135deg, #90CAF9 0%, #2196F3 40%, #0D47A1 100%);
+    background: linear-gradient(180deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
   }
 }
 

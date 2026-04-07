@@ -9,8 +9,11 @@
   const ctx = canvas.getContext('2d');
 
   function resizeCanvas() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr       = window.devicePixelRatio || 1;
+    canvas.width    = window.innerWidth  * dpr;
+    canvas.height   = window.innerHeight * dpr;
+    canvas.style.width  = window.innerWidth  + 'px';
+    canvas.style.height = window.innerHeight + 'px';
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
@@ -21,7 +24,8 @@
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
-  const TRAIL_LIFETIME = 450; // ms each trail point lives before fading out
+  const TRAIL_LIFETIME = 450; // ms each point lives
+  const MIN_DIST       = 3;   // px — skip points too close together
   const trail          = [];  // [{ x, y, t }]
   let mouse            = { x: -200, y: -200 };
   let visible          = false;
@@ -31,7 +35,10 @@
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     visible = true;
-    trail.push({ x: e.clientX, y: e.clientY, t: Date.now() });
+    const last = trail[trail.length - 1];
+    if (!last || Math.hypot(e.clientX - last.x, e.clientY - last.y) >= MIN_DIST) {
+      trail.push({ x: e.clientX, y: e.clientY, t: Date.now() });
+    }
   });
 
   document.addEventListener('mouseleave', () => { visible = false; });
@@ -53,34 +60,46 @@
   // ── Render loop ────────────────────────────────────────────
   function render() {
     const now = Date.now();
+    const dpr = window.devicePixelRatio || 1;
+
+    // Scale context to physical pixels for crisp rendering
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
     // Evict expired trail points
     while (trail.length && now - trail[0].t > TRAIL_LIFETIME) trail.shift();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw smooth bezier trail through midpoints
+    if (trail.length >= 3) {
+      for (let i = 1; i < trail.length - 1; i++) {
+        const p0 = trail[i - 1];
+        const p1 = trail[i];
+        const p2 = trail[i + 1];
 
-    // Draw trail: newest = light grey, fades to black then transparent as it ages
-    if (trail.length > 1) {
-      for (let i = 1; i < trail.length; i++) {
-        const age       = (now - trail[i].t) / TRAIL_LIFETIME; // 0 = fresh, 1 = expired
+        // Midpoints between consecutive trail points
+        const mx0 = (p0.x + p1.x) / 2;
+        const my0 = (p0.y + p1.y) / 2;
+        const mx1 = (p1.x + p2.x) / 2;
+        const my1 = (p1.y + p2.y) / 2;
+
+        const age       = (now - p1.t) / TRAIL_LIFETIME; // 0=fresh, 1=expired
         const freshness = 1 - age;
-        const g         = Math.round(freshness * 200);          // 200 = light grey, 0 = black
-        const alpha     = freshness * 0.75;
-        const width     = 1 + freshness * 2.5;
+        const g         = Math.round(freshness * 200);   // 200=light grey, 0=black
 
         ctx.beginPath();
-        ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
-        ctx.lineTo(trail[i].x,     trail[i].y);
-        ctx.strokeStyle = `rgba(${g}, ${g}, ${g}, ${alpha})`;
-        ctx.lineWidth   = width;
+        ctx.moveTo(mx0, my0);
+        ctx.quadraticCurveTo(p1.x, p1.y, mx1, my1);     // smooth bezier
+        ctx.strokeStyle = `rgba(${g}, ${g}, ${g}, ${freshness * 0.75})`;
+        ctx.lineWidth   = 1 + freshness * 2.5;
         ctx.lineCap     = 'round';
         ctx.lineJoin    = 'round';
         ctx.stroke();
       }
     }
 
-    // Arrow tip is at div top-left (clip-path starts at 0%,0%), so translate directly
-    arrow.style.transform = `translate(${mouse.x}px, ${mouse.y}px)`;
+    // Arrow tip at (0,0) of div; pointer finger tip at center-top (offset -11px)
+    const offsetX = isPointer ? -11 : 0;
+    arrow.style.transform = `translate(${mouse.x + offsetX}px, ${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
 
     requestAnimationFrame(render);
