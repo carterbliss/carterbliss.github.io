@@ -71,7 +71,7 @@
 
   const handImg = new Image();
   handImg.onload = function () {
-    const W = 27, H = 35;
+    const W = 22, H = 30;
     const offscreen = document.createElement('canvas');
     offscreen.width = W; offscreen.height = H;
     const cx = offscreen.getContext('2d');
