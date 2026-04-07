@@ -71,7 +71,7 @@
 
   const handImg = new Image();
   handImg.onload = function () {
-    const W = 24, H = 30;
+    const W = 32, H = 40;
     const offscreen = document.createElement('canvas');
     offscreen.width = W; offscreen.height = H;
     const cx = offscreen.getContext('2d');
@@ -88,7 +88,7 @@
       if (idx < 0 || idx >= W * H || visited[idx]) continue;
       visited[idx] = 1;
       const r = d[idx * 4], g = d[idx * 4 + 1], b = d[idx * 4 + 2];
-      if (r < 160 || g < 160 || b < 160) continue; // stop at dark outline
+      if (r < 220 || g < 220 || b < 220) continue; // stop at dark/gray pixels (outlines + finger gaps)
       const x = idx % W, y = Math.floor(idx / W);
       if (x > 0)   stack.push(idx - 1);
       if (x < W-1) stack.push(idx + 1);
