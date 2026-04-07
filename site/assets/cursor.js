@@ -28,37 +28,31 @@
 
   // ── Arrow cursor element ───────────────────────────────────
   const arrow = document.createElement('div');
-  const ARROW_STYLE = [
+  const ARROW_BASE = [
     'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
     'will-change:transform',
     'transition:opacity 0.15s ease',
-    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))',
+    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))'
+  ].join(';');
+
+  // Arrow shape: tip at exact (0,0) top-left
+  const ARROW_STYLE = [
+    ARROW_BASE,
     'width:20px', 'height:26px',
     'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
     'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
   ].join(';');
 
+  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
+  const POINTER_STYLE = [
+    ARROW_BASE,
+    'width:22px', 'height:28px',
+    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
+    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
+  ].join(';');
+
   arrow.style.cssText = ARROW_STYLE;
   document.body.appendChild(arrow);
-
-  // ── Pointer hand element (image with blue filter) ──────────
-  // CSS filter converts white pixels to blue while keeping black pixels black:
-  //   sepia → warm tint on white, black stays black
-  //   saturate → amplify color
-  //   hue-rotate → shift warm yellow into blue range (~195deg)
-  //   brightness → compensate lightness
-  const pointerEl = document.createElement('img');
-  pointerEl.src = '/assets/hand-cursor.png';
-  pointerEl.style.cssText = [
-    'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
-    'will-change:transform',
-    'transition:opacity 0.15s ease',
-    'width:44px', 'height:54px',
-    'object-fit:contain',
-    'filter:sepia(1) saturate(400%) hue-rotate(195deg) brightness(1.15) drop-shadow(0 2px 5px rgba(13,71,161,0.6))',
-    'opacity:0'
-  ].join(';');
-  document.body.appendChild(pointerEl);
 
   // ── State ──────────────────────────────────────────────────
   const TRAIL_LIFETIME = 450;
@@ -80,15 +74,22 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
+  // Native pointer cursor style injected on link hover
+  const pointerStyleEl = document.createElement('style');
+  pointerStyleEl.textContent = 'a, button, [role="button"], .c-button { cursor: pointer !important; }';
+
   // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
+      arrow.style.opacity = '0';
+      document.head.appendChild(pointerStyleEl);
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
+      if (pointerStyleEl.parentNode) pointerStyleEl.parentNode.removeChild(pointerStyleEl);
     }
   });
 
@@ -124,13 +125,8 @@
       }
     }
 
-    // Arrow cursor: tip at top-left (0,0)
     arrow.style.transform = `translate(${mouse.x}px,${mouse.y}px)`;
-    arrow.style.opacity   = (visible && !isPointer) ? '1' : '0';
-
-    // Pointer cursor: fingertip is roughly center-top of the image; offset left by ~half width
-    pointerEl.style.transform = `translate(${mouse.x - 22}px,${mouse.y}px)`;
-    pointerEl.style.opacity   = (visible && isPointer) ? '1' : '0';
+    if (!isPointer) arrow.style.opacity = visible ? '1' : '0';
 
     requestAnimationFrame(render);
   }
