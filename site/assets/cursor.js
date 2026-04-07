@@ -48,24 +48,27 @@
   // Index finger left tip is at (28% of 22px = ~6px) → offset div by -6px so tip = mouse pos.
   const POINTER_STYLE = [
     ARROW_BASE,
-    'width:22px', 'height:28px',
-    'background:linear-gradient(160deg,#90CAF9 0%,#2196F3 50%,#0D47A1 100%)',
+    'width:24px', 'height:30px',
+    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
     'clip-path:polygon(' +
-      '28% 0%,'  +  // index finger left tip
+      '26% 0%,'  +  // index finger left tip
       '46% 0%,'  +  // index finger right tip
-      '46% 38%,' +  // index right knuckle
-      '62% 28%,' +  // middle finger peak
-      '74% 28%,' +  // middle finger right
-      '74% 42%,' +  // middle knuckle base
-      '85% 33%,' +  // ring/pinky peak
-      '95% 33%,' +  // ring/pinky right
+      '46% 40%,' +  // index right base
+      '54% 30%,' +  // middle finger peak
+      '64% 30%,' +  // middle finger right shoulder
+      '64% 43%,' +  // middle finger base
+      '72% 35%,' +  // ring finger peak
+      '81% 35%,' +  // ring finger right
+      '81% 46%,' +  // ring base
+      '88% 40%,' +  // pinky peak
+      '95% 40%,' +  // pinky right
       '95% 100%,'+  // bottom right
       '5% 100%,' +  // bottom left
-      '5% 48%,'  +  // left palm
-      '0% 40%,'  +  // thumb tip (sticks out left)
-      '5% 33%,'  +  // thumb top
-      '28% 38%,' +  // back to index base
-      '28% 0%'   +  // left side of index finger
+      '5% 52%,'  +  // left palm above thumb
+      '0% 44%,'  +  // thumb tip
+      '5% 36%,'  +  // thumb top
+      '26% 40%,' +  // index base left
+      '26% 0%'   +  // close index finger
     ')'
   ].join(';');
 
