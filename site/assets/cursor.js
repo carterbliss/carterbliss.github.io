@@ -43,12 +43,26 @@
     'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
   ].join(';');
 
-  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
+  // Pointer hand: index finger on LEFT (tip at 0%,0%), other fingers as
+  // descending bumps to the right — matches the standard browser pointer cursor.
+  // No x-offset needed since tip is at top-left same as the arrow.
   const POINTER_STYLE = [
     ARROW_BASE,
     'width:22px', 'height:28px',
-    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
+    'background:linear-gradient(160deg,#90CAF9 0%,#2196F3 50%,#0D47A1 100%)',
+    'clip-path:polygon(' +
+      '0% 0%,'    +   // index fingertip
+      '28% 0%,'   +   // right side of index finger
+      '28% 39%,'  +   // index knuckle
+      '50% 29%,'  +   // middle finger peak (folded, shorter)
+      '64% 29%,'  +   // middle finger right
+      '64% 42%,'  +   // middle finger base
+      '78% 34%,'  +   // ring finger peak (shorter still)
+      '90% 34%,'  +   // ring finger right
+      '90% 45%,'  +   // ring finger base / right palm edge
+      '95% 100%,' +   // bottom right
+      '0% 100%'   +   // bottom left
+    ')'
   ].join(';');
 
   arrow.style.cssText = ARROW_STYLE;
@@ -120,8 +134,8 @@
       }
     }
 
-    // Fingertip offset: arrow tip is at (0,0); pointer tip is at center-top (-11px)
-    const offsetX = isPointer ? -11 : 0;
+    // Both arrow and pointer have their tip at (0,0) top-left — no offset needed
+    const offsetX = 0;
     arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
 
