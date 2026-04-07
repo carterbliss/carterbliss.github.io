@@ -2,17 +2,9 @@
   // Skip on touch devices
   if (window.matchMedia('(hover: none)').matches) return;
 
-  // ── Inject cursor: none so the OS cursor hides ─────────────
-  const styleEl = document.createElement('style');
-  styleEl.textContent = [
-    '*, *::before, *::after { cursor: none !important; }',
-    '@media (hover: none) { *, *::before, *::after { cursor: auto !important; } }'
-  ].join('');
-  document.head.appendChild(styleEl);
-
   // ── Trail canvas ───────────────────────────────────────────
   const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:99998;';
+  canvas.className = 'cursor-trail-canvas';
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
@@ -26,53 +18,9 @@
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
-  // ── Arrow cursor element ───────────────────────────────────
+  // ── Arrow cursor element (styled via CSS class) ────────────
   const arrow = document.createElement('div');
-  const ARROW_BASE = [
-    'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
-    'will-change:transform',
-    'transition:opacity 0.15s ease',
-    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))'
-  ].join(';');
-
-  // Arrow shape: tip at exact (0,0) top-left
-  const ARROW_STYLE = [
-    ARROW_BASE,
-    'width:20px', 'height:26px',
-    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
-  ].join(';');
-
-  // Pointer hand matching classic browser hand cursor:
-  // index finger extended up, middle/ring/pinky as descending bumps, thumb on left.
-  // Index finger left tip is at (28% of 22px = ~6px) → offset div by -6px so tip = mouse pos.
-  const POINTER_STYLE = [
-    ARROW_BASE,
-    'width:24px', 'height:30px',
-    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(' +
-      '26% 0%,'  +  // index finger left tip
-      '46% 0%,'  +  // index finger right tip
-      '46% 40%,' +  // index right base
-      '54% 30%,' +  // middle finger peak
-      '64% 30%,' +  // middle finger right shoulder
-      '64% 43%,' +  // middle finger base
-      '72% 35%,' +  // ring finger peak
-      '81% 35%,' +  // ring finger right
-      '81% 46%,' +  // ring base
-      '88% 40%,' +  // pinky peak
-      '95% 40%,' +  // pinky right
-      '95% 100%,'+  // bottom right
-      '5% 100%,' +  // bottom left
-      '5% 52%,'  +  // left palm above thumb
-      '0% 44%,'  +  // thumb tip
-      '5% 36%,'  +  // thumb top
-      '26% 40%,' +  // index base left
-      '26% 0%'   +  // close index finger
-    ')'
-  ].join(';');
-
-  arrow.style.cssText = ARROW_STYLE;
+  arrow.className = 'cursor-arrow';
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
@@ -95,17 +43,17 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // ── Pointer state ──────────────────────────────────────────
+  // ── Pointer state (toggle CSS class) ──────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.style.cssText = POINTER_STYLE;
+      arrow.classList.add('cursor--pointer');
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      arrow.style.cssText = ARROW_STYLE;
+      arrow.classList.remove('cursor--pointer');
     }
   });
 
@@ -141,7 +89,7 @@
       }
     }
 
-    // Arrow tip at (0,0) — no offset. Pointer index tip at 28% of 22px = ~6px in — offset -6px.
+    // Arrow tip at (0,0). Pointer index tip at 26% of 24px = ~6px — offset -6px.
     const offsetX = isPointer ? -6 : 0;
     arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
