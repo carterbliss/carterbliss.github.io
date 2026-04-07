@@ -2,17 +2,9 @@
   // Skip on touch devices
   if (window.matchMedia('(hover: none)').matches) return;
 
-  // ── Inject cursor: none so the OS cursor hides ─────────────
-  const styleEl = document.createElement('style');
-  styleEl.textContent = [
-    '*, *::before, *::after { cursor: none !important; }',
-    '@media (hover: none) { *, *::before, *::after { cursor: auto !important; } }'
-  ].join('');
-  document.head.appendChild(styleEl);
-
   // ── Trail canvas ───────────────────────────────────────────
   const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:99998;';
+  canvas.className = 'cursor-trail-canvas';
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
@@ -26,32 +18,9 @@
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
-  // ── Arrow cursor element ───────────────────────────────────
+  // ── Arrow cursor element (styled via CSS class) ────────────
   const arrow = document.createElement('div');
-  const ARROW_BASE = [
-    'position:fixed', 'top:0', 'left:0', 'pointer-events:none', 'z-index:99999',
-    'will-change:transform',
-    'transition:opacity 0.15s ease',
-    'filter:drop-shadow(0 2px 5px rgba(13,71,161,0.6))'
-  ].join(';');
-
-  // Arrow shape: tip at exact (0,0) top-left
-  const ARROW_STYLE = [
-    ARROW_BASE,
-    'width:20px', 'height:26px',
-    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
-  ].join(';');
-
-  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
-  const POINTER_STYLE = [
-    ARROW_BASE,
-    'width:22px', 'height:28px',
-    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
-  ].join(';');
-
-  arrow.style.cssText = ARROW_STYLE;
+  arrow.className = 'cursor-arrow';
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
@@ -74,17 +43,17 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // ── Pointer state ──────────────────────────────────────────
+  // ── Pointer state (toggle CSS class) ──────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.style.cssText = POINTER_STYLE;
+      arrow.classList.add('cursor--pointer');
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      arrow.style.cssText = ARROW_STYLE;
+      arrow.classList.remove('cursor--pointer');
     }
   });
 
@@ -96,10 +65,8 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    // Evict expired points
     while (trail.length && now - trail[0].t > TRAIL_LIFETIME) trail.shift();
 
-    // Smooth bezier trail through midpoints
     if (trail.length >= 3) {
       for (let i = 1; i < trail.length - 1; i++) {
         const p0 = trail[i - 1], p1 = trail[i], p2 = trail[i + 1];
@@ -120,7 +87,7 @@
       }
     }
 
-    // Fingertip offset: arrow tip is at (0,0); pointer tip is at center-top (-11px)
+    // Arrow tip at (0,0). Pointer fingertip is at center-top — offset -11px.
     const offsetX = isPointer ? -11 : 0;
     arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
