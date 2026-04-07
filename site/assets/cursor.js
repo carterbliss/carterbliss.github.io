@@ -43,25 +43,29 @@
     'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
   ].join(';');
 
-  // Pointer hand: index finger on LEFT (tip at 0%,0%), other fingers as
-  // descending bumps to the right — matches the standard browser pointer cursor.
-  // No x-offset needed since tip is at top-left same as the arrow.
+  // Pointer hand matching classic browser hand cursor:
+  // index finger extended up, middle/ring/pinky as descending bumps, thumb on left.
+  // Index finger left tip is at (28% of 22px = ~6px) → offset div by -6px so tip = mouse pos.
   const POINTER_STYLE = [
     ARROW_BASE,
     'width:22px', 'height:28px',
     'background:linear-gradient(160deg,#90CAF9 0%,#2196F3 50%,#0D47A1 100%)',
     'clip-path:polygon(' +
-      '0% 0%,'    +   // index fingertip
-      '28% 0%,'   +   // right side of index finger
-      '28% 39%,'  +   // index knuckle
-      '50% 29%,'  +   // middle finger peak (folded, shorter)
-      '64% 29%,'  +   // middle finger right
-      '64% 42%,'  +   // middle finger base
-      '78% 34%,'  +   // ring finger peak (shorter still)
-      '90% 34%,'  +   // ring finger right
-      '90% 45%,'  +   // ring finger base / right palm edge
-      '95% 100%,' +   // bottom right
-      '0% 100%'   +   // bottom left
+      '28% 0%,'  +  // index finger left tip
+      '46% 0%,'  +  // index finger right tip
+      '46% 38%,' +  // index right knuckle
+      '62% 28%,' +  // middle finger peak
+      '74% 28%,' +  // middle finger right
+      '74% 42%,' +  // middle knuckle base
+      '85% 33%,' +  // ring/pinky peak
+      '95% 33%,' +  // ring/pinky right
+      '95% 100%,'+  // bottom right
+      '5% 100%,' +  // bottom left
+      '5% 48%,'  +  // left palm
+      '0% 40%,'  +  // thumb tip (sticks out left)
+      '5% 33%,'  +  // thumb top
+      '28% 38%,' +  // back to index base
+      '28% 0%'   +  // left side of index finger
     ')'
   ].join(';');
 
@@ -134,8 +138,8 @@
       }
     }
 
-    // Both arrow and pointer have their tip at (0,0) top-left — no offset needed
-    const offsetX = 0;
+    // Arrow tip at (0,0) — no offset. Pointer index tip at 28% of 22px = ~6px in — offset -6px.
+    const offsetX = isPointer ? -6 : 0;
     arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
 
