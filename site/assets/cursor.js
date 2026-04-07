@@ -21,33 +21,52 @@
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
-  const TRAIL_MAX = 22;
-  const trail     = [];
-  let mouse       = { x: -200, y: -200 };
-  let visible     = false;
+  const TRAIL_LIFETIME = 450; // ms each trail point lives before fading out
+  const trail          = [];  // [{ x, y, t }]
+  let mouse            = { x: -200, y: -200 };
+  let visible          = false;
+  let isPointer        = false;
 
   document.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     visible = true;
-    trail.push({ x: e.clientX, y: e.clientY });
-    if (trail.length > TRAIL_MAX) trail.shift();
+    trail.push({ x: e.clientX, y: e.clientY, t: Date.now() });
   });
 
   document.addEventListener('mouseleave', () => { visible = false; });
-  document.addEventListener('mouseenter', () => { visible = true; });
+
+  // ── Pointer state (links / buttons) ───────────────────────
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a, button, [role="button"], .c-button')) {
+      isPointer = true;
+      arrow.classList.add('cursor--pointer');
+    }
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a, button, [role="button"], .c-button')) {
+      isPointer = false;
+      arrow.classList.remove('cursor--pointer');
+    }
+  });
 
   // ── Render loop ────────────────────────────────────────────
   function render() {
+    const now = Date.now();
+
+    // Evict expired trail points
+    while (trail.length && now - trail[0].t > TRAIL_LIFETIME) trail.shift();
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw trail: black at tail → light grey near cursor tip
+    // Draw trail: newest = light grey, fades to black then transparent as it ages
     if (trail.length > 1) {
       for (let i = 1; i < trail.length; i++) {
-        const t     = i / (trail.length - 1); // 0 = oldest (black), 1 = newest (light grey)
-        const g     = Math.round(t * 200);     // grey channel: 0 → 200
-        const alpha = t * 0.72;
-        const width = 1 + t * 2.5;
+        const age       = (now - trail[i].t) / TRAIL_LIFETIME; // 0 = fresh, 1 = expired
+        const freshness = 1 - age;
+        const g         = Math.round(freshness * 200);          // 200 = light grey, 0 = black
+        const alpha     = freshness * 0.75;
+        const width     = 1 + freshness * 2.5;
 
         ctx.beginPath();
         ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
@@ -60,7 +79,7 @@
       }
     }
 
-    // Position arrow tip at exact cursor coords
+    // Arrow tip is at div top-left (clip-path starts at 0%,0%), so translate directly
     arrow.style.transform = `translate(${mouse.x}px, ${mouse.y}px)`;
     arrow.style.opacity   = visible ? '1' : '0';
 

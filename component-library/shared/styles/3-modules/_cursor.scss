@@ -11,7 +11,6 @@
   z-index: 99998;
 }
 
-// Standard arrow pointer shape via clip-path, blue acrylic gradient
 .cursor-arrow {
   position: fixed;
   top: 0;
@@ -21,18 +20,32 @@
   pointer-events: none;
   z-index: 99999;
   will-change: transform;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, clip-path 0.12s ease, width 0.12s ease, height 0.12s ease;
   background: linear-gradient(135deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
-  // Arrow polygon: tip → left edge → inner notch → tail → inner notch → right edge → close
-  clip-path: polygon(6% 5%, 6% 77%, 31% 59%, 50% 91%, 69% 84%, 50% 52%, 81% 52%);
+  // Tip is at (0%, 0%) — exact top-left — so trail draws from the correct point
+  clip-path: polygon(0% 0%, 0% 62%, 20% 46%, 35% 73%, 50% 67%, 35% 40%, 60% 40%);
   filter: drop-shadow(0 2px 5px rgba(13, 71, 161, 0.6));
 
-  // Gloss overlay for acrylic effect (inherits clip from parent painted output)
+  // Gloss overlay for acrylic effect
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%);
+  }
+
+  // Pointer finger — shown when hovering links / buttons
+  // Tip stays at (0%, 0%) so positioning logic is unchanged
+  // Shape: narrow fingertip at top-left, widens into a palm/hand body
+  &.cursor--pointer {
+    width: 20px;
+    height: 26px;
+    clip-path: polygon(
+      0% 0%, 24% 0%, 24% 36%,
+      80% 36%, 88% 55%, 80% 100%,
+      4% 100%, 0% 55%
+    );
+    background: linear-gradient(135deg, #90CAF9 0%, #2196F3 40%, #0D47A1 100%);
   }
 }
 
