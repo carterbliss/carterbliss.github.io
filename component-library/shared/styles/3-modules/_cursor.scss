@@ -22,7 +22,7 @@
   will-change: transform;
   transition: opacity 0.15s ease, clip-path 0.12s ease, width 0.12s ease, height 0.12s ease;
   background: linear-gradient(135deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
-  // Tip is at (0%, 0%) — exact top-left
+  // Tip is at (0%, 0%) — exact top-left — so trail draws from the correct point
   clip-path: polygon(0% 0%, 0% 62%, 20% 46%, 35% 73%, 50% 67%, 35% 40%, 60% 40%);
   filter: drop-shadow(0 2px 5px rgba(13, 71, 161, 0.6));
 
@@ -35,32 +35,26 @@
   }
 
   // Pointer hand — shown when hovering links / buttons
-  // Index finger extended up on left, middle/ring/pinky as descending bumps, thumb on left.
-  // JS offsets div by -6px so the index fingertip lands on the mouse position.
+  // Index finger extended upward, tip at center-top (50%, 0%).
+  // JS offsets the div by -11px so the fingertip lands on the mouse position.
   &.cursor--pointer {
-    width: 24px;
-    height: 30px;
+    width: 22px;
+    height: 28px;
     clip-path: polygon(
-      26%  0%,   // index finger left tip
-      46%  0%,   // index finger right tip
-      46% 40%,   // index right base
-      54% 30%,   // middle finger peak
-      64% 30%,   // middle finger right shoulder
-      64% 43%,   // middle finger base
-      72% 35%,   // ring finger peak
-      81% 35%,   // ring finger right
-      81% 46%,   // ring base
-      88% 40%,   // pinky peak
-      95% 40%,   // pinky right
-      95% 100%,  // bottom right
-       5% 100%,  // bottom left
-       5%  52%,  // left palm above thumb
-       0%  44%,  // thumb tip
-       5%  36%,  // thumb top
-      26%  40%,  // index base left
-      26%   0%   // close index finger
+      36%  0%,              // left of fingertip
+      64%  0%,              // right of fingertip
+      64%  43%,             // right side of finger → palm join
+      82%  43%,             // right outer knuckle (other fingers)
+      91%  57%,             // right palm edge
+      91%  86%,             // lower right palm
+      82% 100%,             // bottom right (rounded approx)
+      18% 100%,             // bottom left
+       9%  86%,             // lower left palm
+       9%  57%,             // left palm edge
+      18%  43%,             // left outer knuckle
+      36%  43%              // left side of finger → palm join
     );
-    background: linear-gradient(135deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
+    background: linear-gradient(180deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
   }
 }
 
