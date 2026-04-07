@@ -11,15 +11,29 @@
   z-index: 99998;
 }
 
+// Standard arrow pointer shape via clip-path, blue acrylic gradient
 .cursor-arrow {
   position: fixed;
   top: 0;
   left: 0;
+  width: 20px;
+  height: 26px;
   pointer-events: none;
   z-index: 99999;
   will-change: transform;
   transition: opacity 0.15s ease;
-  filter: drop-shadow(0 2px 5px rgba(13, 71, 161, 0.5));
+  background: linear-gradient(135deg, #90CAF9 0%, #2196F3 45%, #0D47A1 100%);
+  // Arrow polygon: tip → left edge → inner notch → tail → inner notch → right edge → close
+  clip-path: polygon(6% 5%, 6% 77%, 31% 59%, 50% 91%, 69% 84%, 50% 52%, 81% 52%);
+  filter: drop-shadow(0 2px 5px rgba(13, 71, 161, 0.6));
+
+  // Gloss overlay for acrylic effect (inherits clip from parent painted output)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%);
+  }
 }
 
 // Hide on touch/mobile

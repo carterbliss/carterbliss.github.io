@@ -18,23 +18,6 @@
   // ── Arrow cursor element ───────────────────────────────────
   const arrow = document.createElement('div');
   arrow.className = 'cursor-arrow';
-  arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 22" width="20" height="27">
-    <defs>
-      <linearGradient id="cursorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%"   stop-color="#90CAF9"/>
-        <stop offset="40%"  stop-color="#2196F3"/>
-        <stop offset="100%" stop-color="#0D47A1"/>
-      </linearGradient>
-      <linearGradient id="cursorGloss" x1="0%" y1="0%" x2="70%" y2="70%">
-        <stop offset="0%"   stop-color="white" stop-opacity="0.55"/>
-        <stop offset="100%" stop-color="white" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <path d="M1 1 L1 17 L5 13 L8 20 L11 18.5 L8 11.5 L13 11.5 Z"
-      fill="url(#cursorGrad)" stroke="#0A3D91" stroke-width="0.8" stroke-linejoin="round"/>
-    <path d="M1 1 L1 17 L5 13 L8 20 L11 18.5 L8 11.5 L13 11.5 Z"
-      fill="url(#cursorGloss)"/>
-  </svg>`;
   document.body.appendChild(arrow);
 
   // ── State ──────────────────────────────────────────────────
