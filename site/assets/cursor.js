@@ -43,12 +43,32 @@
     'clip-path:polygon(0% 0%,0% 62%,20% 46%,35% 73%,50% 67%,35% 40%,60% 40%)'
   ].join(';');
 
-  // Pointer hand: index finger up, palm below; tip at center-top (offset -11px in JS)
+  // Pointer hand: index finger on the LEFT, other fingers as descending bumps to the right.
+  // Index finger left edge is at 8% of 32px = ~3px → offsetX = -3 so tip aligns with mouse.
   const POINTER_STYLE = [
     ARROW_BASE,
-    'width:22px', 'height:28px',
-    'background:linear-gradient(180deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
-    'clip-path:polygon(36% 0%,64% 0%,64% 43%,82% 43%,91% 57%,91% 86%,82% 100%,18% 100%,9% 86%,9% 57%,18% 43%,36% 43%)'
+    'width:32px', 'height:40px',
+    'background:linear-gradient(135deg,#90CAF9 0%,#2196F3 45%,#0D47A1 100%)',
+    'clip-path:polygon(' +
+      '8% 0%,'  +   // index finger left tip
+      '28% 0%,' +   // index finger right tip
+      '28% 42%,'+   // index right base
+      '40% 28%,'+   // middle finger peak
+      '54% 28%,'+   // middle right
+      '54% 43%,'+   // middle base
+      '66% 33%,'+   // ring finger peak
+      '77% 33%,'+   // ring right
+      '77% 46%,'+   // ring base
+      '86% 38%,'+   // pinky peak
+      '94% 38%,'+   // pinky right
+      '94% 100%,'+  // bottom right
+      '4% 100%,' +  // bottom left
+      '4% 52%,'  +  // left palm above thumb
+      '0% 44%,'  +  // thumb tip
+      '4% 36%,'  +  // thumb top
+      '8% 40%,'  +  // index base left
+      '8% 0%'    +  // close
+    ')'
   ].join(';');
 
   arrow.style.cssText = ARROW_STYLE;
@@ -74,34 +94,17 @@
 
   document.addEventListener('mouseleave', () => { visible = false; });
 
-  // SVG hand cursor with matching blue gradient
-  const svgHand = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">'
-    + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-    + '<stop offset="0%" stop-color="#90CAF9"/>'
-    + '<stop offset="45%" stop-color="#2196F3"/>'
-    + '<stop offset="100%" stop-color="#0D47A1"/>'
-    + '</linearGradient>'
-    + '<filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0D47A1" flood-opacity="0.5"/></filter>'
-    + '</defs>'
-    + '<path d="M9,0 L14,0 L14,16 Q18,11 21,16 L21,22 Q24,15 27,22 L27,36 L3,36 L3,22 Q0,18 3,15 Q6,11 9,16 Z" fill="url(#g)" filter="url(#s)"/>'
-    + '</svg>';
-  const pointerStyleEl = document.createElement('style');
-  pointerStyleEl.textContent = 'a,button,[role="button"],.c-button{cursor:url("data:image/svg+xml,'
-    + encodeURIComponent(svgHand)
-    + '") 9 0,pointer !important;}';
-
   // ── Pointer state ──────────────────────────────────────────
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = true;
-      arrow.style.opacity = '0';
-      document.head.appendChild(pointerStyleEl);
+      arrow.style.cssText = POINTER_STYLE;
     }
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest('a, button, [role="button"], .c-button')) {
       isPointer = false;
-      if (pointerStyleEl.parentNode) pointerStyleEl.parentNode.removeChild(pointerStyleEl);
+      arrow.style.cssText = ARROW_STYLE;
     }
   });
 
@@ -137,8 +140,9 @@
       }
     }
 
-    arrow.style.transform = `translate(${mouse.x}px,${mouse.y}px)`;
-    if (!isPointer) arrow.style.opacity = visible ? '1' : '0';
+    const offsetX = isPointer ? -3 : 0;
+    arrow.style.transform = `translate(${mouse.x + offsetX}px,${mouse.y}px)`;
+    arrow.style.opacity = visible ? '1' : '0';
 
     requestAnimationFrame(render);
   }
