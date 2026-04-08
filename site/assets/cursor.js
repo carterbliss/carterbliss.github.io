@@ -71,57 +71,69 @@
 
   const handImg = new Image();
   handImg.onload = function () {
+    // Final cursor display size
     const W = 22, H = 30;
-    const offscreen = document.createElement('canvas');
-    offscreen.width = W; offscreen.height = H;
-    const cx = offscreen.getContext('2d');
-    cx.drawImage(handImg, 0, 0, W, H);
+    // Process at 4× for fidelity — preserves thin lines between fingers
+    const SCALE = 4;
+    const PW = W * SCALE, PH = H * SCALE;
 
-    const imageData = cx.getImageData(0, 0, W, H);
+    // Step 1: draw at high resolution
+    const hi = document.createElement('canvas');
+    hi.width = PW; hi.height = PH;
+    const hx2 = hi.getContext('2d');
+    hx2.drawImage(handImg, 0, 0, PW, PH);
+
+    const imageData = hx2.getImageData(0, 0, PW, PH);
     const d = imageData.data;
 
-    // Flood-fill from corners through light pixels to mark background
-    const visited = new Uint8Array(W * H);
-    const stack = [0, W - 1, (H - 1) * W, H * W - 1];
+    // Step 2: flood-fill from corners to mark background (stop at any non-pure-white pixel)
+    const visited = new Uint8Array(PW * PH);
+    const stack = [0, PW - 1, (PH - 1) * PW, PH * PW - 1];
     while (stack.length) {
       const idx = stack.pop();
-      if (idx < 0 || idx >= W * H || visited[idx]) continue;
+      if (idx < 0 || idx >= PW * PH || visited[idx]) continue;
       visited[idx] = 1;
       const r = d[idx * 4], g = d[idx * 4 + 1], b = d[idx * 4 + 2];
-      if (r < 220 || g < 220 || b < 220) continue; // stop at dark/gray pixels (outlines + finger gaps)
-      const x = idx % W, y = Math.floor(idx / W);
-      if (x > 0)   stack.push(idx - 1);
-      if (x < W-1) stack.push(idx + 1);
-      if (y > 0)   stack.push(idx - W);
-      if (y < H-1) stack.push(idx + W);
+      if (r < 220 || g < 220 || b < 220) continue; // stop at outlines and finger-gap lines
+      const x = idx % PW, y = Math.floor(idx / PW);
+      if (x > 0)    stack.push(idx - 1);
+      if (x < PW-1) stack.push(idx + 1);
+      if (y > 0)    stack.push(idx - PW);
+      if (y < PH-1) stack.push(idx + PW);
     }
 
-    // Recolor pixels
-    for (let i = 0; i < W * H; i++) {
+    // Step 3: recolor pixels
+    for (let i = 0; i < PW * PH; i++) {
       const pi = i * 4;
       if (visited[i]) {
-        // Background → transparent
-        d[pi] = d[pi+1] = d[pi+2] = d[pi+3] = 0;
+        d[pi] = d[pi+1] = d[pi+2] = d[pi+3] = 0; // background → transparent
       } else {
         const brightness = (d[pi] + d[pi+1] + d[pi+2]) / (3 * 255);
         if (brightness > 0.55) {
-          // White fill → blue gradient (135deg: top-left #90CAF9, bottom-right #0D47A1)
-          const t = ((i % W) / W + Math.floor(i / W) / H) / 2;
-          d[pi]   = Math.round(144 + (13  - 144) * t); // R: 144→13
-          d[pi+1] = Math.round(202 + (71  - 202) * t); // G: 202→71
-          d[pi+2] = Math.round(249 + (161 - 249) * t); // B: 249→161
+          // White fill → blue gradient
+          const t = ((i % PW) / PW + Math.floor(i / PW) / PH) / 2;
+          d[pi]   = Math.round(144 + (13  - 144) * t);
+          d[pi+1] = Math.round(202 + (71  - 202) * t);
+          d[pi+2] = Math.round(249 + (161 - 249) * t);
           d[pi+3] = 255;
         }
-        // else: dark pixels (black outline) stay unchanged
+        // Dark pixels (black outline) stay unchanged
       }
     }
+    hx2.putImageData(imageData, 0, 0);
 
-    cx.putImageData(imageData, 0, 0);
-    const url = offscreen.toDataURL();
-    // Hotspot: fingertip is roughly center-top of the hand image
-    const hx = Math.round(W / 2), hy = 2;
+    // Step 4: downscale to final cursor size (browser anti-aliases, preserving detail)
+    const out = document.createElement('canvas');
+    out.width = W; out.height = H;
+    const octx = out.getContext('2d');
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = 'high';
+    octx.drawImage(hi, 0, 0, W, H);
+
+    const url = out.toDataURL();
+    const hotX = Math.round(W / 2), hotY = 2;
     pointerStyleEl.textContent =
-      'a,button,[role="button"],.c-button{cursor:url("' + url + '") ' + hx + ' ' + hy + ',pointer!important;}';
+      'a,button,[role="button"],.c-button{cursor:url("' + url + '") ' + hotX + ' ' + hotY + ',pointer!important;}';
   };
   handImg.src = '/assets/hand-cursor.png';
 
