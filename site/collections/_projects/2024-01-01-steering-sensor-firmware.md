@@ -685,6 +685,16 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 ## Outcome
 
-[Description coming soon]
+<figure style="margin:16px 0; text-align:center;">
+  <video muted controls style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <source src="/assets/steering-car-driving.mov" type="video/mp4">
+  </video>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">HTX driving with the steering sensor system active</figcaption>
+</figure>
 
-[Video coming soon]
+<figure style="margin:16px 0; text-align:center;">
+  <video muted controls style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <source src="/assets/steering-serial-debug.mov" type="video/mp4">
+  </video>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Serial debug output confirming the steering system functioning correctly</figcaption>
+</figure>
