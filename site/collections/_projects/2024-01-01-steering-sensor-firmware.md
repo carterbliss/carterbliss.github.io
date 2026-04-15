@@ -649,12 +649,19 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 
 <details>
-<summary>VCF Constants</summary>
+<summary>VCF - Constants</summary>
 <div class="code-description">
   <strong>Approach:</strong> [Coming soon]
 </div>
 </details>
 
+
+<details>
+<summary>VCF - Debug Prints</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
 
 <details>
 <summary>VCF - CAN Send</summary>
@@ -715,11 +722,4 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
     <source src="/assets/steering-serial-debug.mov" type="video/mp4">
   </video>
   <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Serial debug output confirming the steering system functioning correctly</figcaption>
-</figure>
-
-<figure style="margin:16px 0; text-align:center;">
-  <video muted controls style="width:100%; border-radius:8px; border:1px solid #30363d;">
-    <source src="/assets/steering-debug-prints.mov" type="video/mp4">
-  </video>
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Debug prints</figcaption>
 </figure>
