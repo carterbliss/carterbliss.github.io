@@ -72,10 +72,34 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 .code-accordion pre code.hljs {
   padding: 20px !important;
 }
+/* Accordion group */
+.code-accordion details.accordion-group {
+  border-color: #21262d;
+  background: #0d1117;
+  margin-bottom: 16px;
+}
+.code-accordion details.accordion-group > summary {
+  font-size: 17px;
+  color: #58a6ff;
+}
+.code-accordion details.accordion-group[open] > summary {
+  border-bottom-color: #21262d;
+}
+.accordion-group-body {
+  padding: 10px 12px;
+  background: #0d1117;
+}
+.accordion-group-body details:last-child {
+  margin-bottom: 0;
+}
 </style>
 
 <div class="code-accordion">
 
+
+<details class="accordion-group">
+<summary>Steering System Design</summary>
+<div class="accordion-group-body">
 
 <details>
 <summary>Initialize Variables</summary>
@@ -505,9 +529,16 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 </code></pre>
 </details>
 
+</div>
+</details>
+
+
+<details class="accordion-group">
+<summary>VCF System Design</summary>
+<div class="accordion-group-body">
 
 <details>
-<summary>VCF – Setup All Interfaces</summary>
+<summary>Setup All Interfaces</summary>
 <div class="code-description">
   <strong>Approach:</strong> Before any tasks run, the vehicle's hardware peripherals need to be initialized and the steering system needs to be seeded with calibration data. Since the analog sensor is never recalibrated, its parameters are hard-coded constants. The digital sensor's limits, however, were written to EEPROM during the prior calibration run, so we read those back here to restore the steering system to the last known good state without requiring the driver to recalibrate on every power cycle.
 </div>
@@ -562,7 +593,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 
 <details>
-<summary>VCF – Async Main Task</summary>
+<summary>Async Main Task</summary>
 <div class="code-description">
   <strong>Approach:</strong> This task runs as fast as the scheduler allows and is responsible for keeping sensor data fresh. On each tick it samples the Orbis digital encoder, reads the analog ADC channel, then calls <code>evaluate_steering</code> with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
 </div>
@@ -603,7 +634,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 
 <details>
-<summary>VCF – Update Steering Calibration Task</summary>
+<summary>Update Steering Calibration Task</summary>
 <div class="code-description">
   <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires, it calls <code>recalibrate_steering_digital</code> and then writes every updated limit to EEPROM..
 </div>
@@ -629,7 +660,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 
 <details>
-<summary>VCF – Enqueue Steering Data</summary>
+<summary>Enqueue Steering Data</summary>
 <div class="code-description">
   <strong>Approach:</strong> Once the steering system has validated its output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates: evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
 </div>
@@ -649,7 +680,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 
 
 <details>
-<summary>VCF - Constants</summary>
+<summary>Constants</summary>
 <div class="code-description">
   <strong>Approach:</strong> On the VCF firmware, we have a global project file designated for setting addresses that will be referenced in VCF_Tasks. To ensure every variable is available when the system runs, we define all corresponding constants in our VCF_constants file. The steering system variables are assigned as EEPROM addresses, so the values themselves are not the actual physical values they represent: they are just memory locations. In the VCFTaskConstants namespace, the variables define the sample rate of each component, determining how many times per second each task runs.
 </div>
@@ -702,7 +733,7 @@ namespace VCFTaskConstants {
 
 
 <details>
-<summary>VCF - Debug Prints</summary>
+<summary>Debug Prints</summary>
 <div class="code-description">
   <strong>Approach:</strong> Our debug prints function on VCF_tasks simply allows us to hardware test the values generated from our system after flashing the teensy41 microcontroller. It prints in serial and samples at the rate listed in VCF_constants. You can see the output of these prints in the outcome video of us testing the system. 
 </div>
@@ -753,7 +784,7 @@ namespace VCFTaskConstants {
 </details>
 
 <details>
-<summary>VCF - CAN Send</summary>
+<summary>CAN Send</summary>
 <div class="code-description">
   <strong>Approach:</strong> Once the steering system has evaluated all data, this task packages the important system values into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates: evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus. Additionally, to run our recalibration function, we must send data from the front dashboard which holds all controller button values: this is handled in a separate enqueue function. The output steering angle is passed through a conversion function that rewrites it from a 32-bit float to a signed 8-bit integer, reducing message size and improving throughput. Some variables are omitted from the output message to ensure the full message fits within 32 bits. Lastly, the send function flushes all messages queued by the enqueue functions out onto the CAN bus.
 </div>
@@ -821,7 +852,7 @@ namespace VCFCANInterfaceImpl {
 
 
 <details>
-<summary>VCF - CAN Receive</summary>
+<summary>CAN Receive</summary>
 <div class="code-description">
   <strong>Approach:</strong> The VCF CAN receive function follows the standard layout: initialize the message from CAN, then call an unpack function to decode it. It unpacks the DASH_INPUT message from the dashboard and assigns each button and dial field to a struct called curr_data, which tracks the live status of each input.
 </div>
@@ -842,9 +873,16 @@ namespace VCFCANInterfaceImpl {
 </code></pre>
 </details>
 
+</div>
+</details>
+
+
+<details class="accordion-group">
+<summary>VCR System Design</summary>
+<div class="accordion-group-body">
 
 <details>
-<summary>VCR - CAN Receive</summary>
+<summary>CAN Receive</summary>
 <div class="code-description">
   <strong>Approach:</strong> The VCR CAN receive function unpacks the DASHBOARD_BUZZER_CONTROL message from VCF. It handles buzzer activation and sets the calibration state flags that the VCR state machine reads to determine whether a steering recalibration has been triggered.
 </div>
@@ -870,7 +908,7 @@ namespace VCFCANInterfaceImpl {
 
 
 <details>
-<summary>VCR - State Machine</summary>
+<summary>State Machine</summary>
 <div class="code-description">
   <strong>Approach:</strong> To recalibrate steering, we create a state machine on VCR that tracks the current vehicle state and determines when the car is ready for recalibration. There are two relevant states. <strong>WANTING_RECALIBRATE_STEERING</strong> is entered when the calibrate steering button is pressed (determined in CAN receive). If the button is released, the state falls back to <strong>TRACTIVE_SYSTEM_NOT_ACTIVE</strong>, the default state when high voltage is off. If the button stays pressed for over 3 seconds, the state transitions to <strong>RECALIBRATING_STEERING</strong>. In that state, as long as the button remains held, it continuously calls the send steering recalibration message function. The helper functions handle the entry and exit logic for each state: recording a timestamp when a state is entered, and resetting it on exit.
 </div>
@@ -954,7 +992,7 @@ void VehicleStateMachine::_handle_entry_logic(VehicleState_e new_state, unsigned
 
 
 <details>
-<summary>VCR - CAN Send</summary>
+<summary>CAN Send</summary>
 <div class="code-description">
   <strong>Approach:</strong> In terms of firmware, CAN send from VCR has the same logistics as VCF, it just matters what values we are sending. Since for this system we want VCR to validate our steering recalibration based on the vehicle state machine, outputting the steering calibration state in one message, and the state of the vehicle in another. Once this is unpacked in in the CAN Recieve section, you can see how this initializes the recalibration function in VCF tasks. Full circle moment!
 </div>
@@ -988,9 +1026,16 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 </code></pre>
 </details>
 
+</div>
+</details>
+
+
+<details class="accordion-group">
+<summary>Car Messaging System</summary>
+<div class="accordion-group-body">
 
 <details>
-<summary>HT-PROTO - PCAN Library</summary>
+<summary>PCAN Library</summary>
 <div class="code-description">
   <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-Proto repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running: including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
 </div>
@@ -1089,6 +1134,9 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   </div>
 </div>
 
+</details>
+
+</div>
 </details>
 
 
