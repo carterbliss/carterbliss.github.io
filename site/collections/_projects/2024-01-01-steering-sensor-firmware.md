@@ -7,7 +7,7 @@ image: '/images/ht09.png'
 
 ## Overview
 
-For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I worked with a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, and also run plausability and recalibration functions.
+For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I led a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, run plausability and recalibration functions, and sends these values throughout the car via CAN & Ethernet.
 
 
 ## Technical Details
@@ -634,6 +634,48 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
     EXPECT_TRUE(data.both_sensors_fail);
 }
 </code></pre>
+</details>
+
+<details>
+<summary>CAN Send</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>CAN Handle</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>CAN Receive</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>VCR Recalibrate</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>VCF Constants</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>PCAN Library</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
 </details>
 
 </div>
