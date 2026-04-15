@@ -7,7 +7,7 @@ image: '/images/ht09.png'
 
 ## Overview
 
-For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I led a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, run plausability and recalibration functions, and sends these values throughout the car via CAN & Ethernet.
+For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I led a team of four to design and implement the steering system onto the HTX vehicle control front. Our system outputs steering angle conversions to the front dashboard, run plausibility and recalibration functions, and sends these values throughout the car via CAN & Ethernet.
 
 
 ## Technical Details
@@ -81,7 +81,7 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 <summary>Initialize Variables</summary>
 <div class="code-description">
   
-  <strong>Approach:</strong> To run plausability, range, and calibration functions, we need to establish two structures that will be used throughout the system. Our first struct is steering parameters, which essentially sets all relevant extremeties and important data points, such as the midpoint analog to digital conversion(adc) value. Our system data struct is used for real time sensor value input. These are the raw adc values we take from our steering sensor to input into our system's functions. 
+  <strong>Approach:</strong> To run plausibility, range, and calibration functions, we need to establish two structures that will be used throughout the system. Our first struct is steering parameters, which essentially sets all relevant extremities and important data points, such as the midpoint analog to digital conversion(adc) value. Our system data struct is used for real time sensor value input. These are the raw adc values we take from our steering sensor to input into our system's functions. 
 </div>
 <pre><code class="language-cpp">struct SteeringParams_s {
     // raw ADC input signals
@@ -148,7 +148,7 @@ struct SteeringSystemData_s
 <summary>Recalibrate</summary>
 <div class="code-description">
 
-  <strong>Approach:</strong> For our steering system, we only recalibrate the digital sensor, since its sensor readings  come from a magnet which can rattle when the car is active. Therefore, for this function we intake the digital raw values, as well as a button on the steering wheel which triggers a recalibration. Our function then constantly reupdates relative extremeties, and once the button releases it will write those values to EEPROM (Later seen in vehicle control front tasks). Additionally, in this function we set our steering parameters according to the minimum and maximum values we read. 
+  <strong>Approach:</strong> For our steering system, we only recalibrate the digital sensor, since its sensor readings come from a magnet which can rattle when the car is active. Therefore, for this function we intake the digital raw values, as well as a button on the steering wheel which triggers a recalibration. Our function then constantly reupdates relative extremities, and once the button releases it will write those values to EEPROM (Later seen in vehicle control front tasks). Additionally, in this function we set our steering parameters according to the minimum and maximum values we read. 
 </div>
 <pre><code class="language-cpp">void SteeringSystem::recalibrate_steering_digital(const uint32_t analog_raw, const uint32_t digital_raw, bool calibration_is_on) {
     //get current raw angles
@@ -244,7 +244,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Evaluate Steering</summary>
 <div class="code-description">
-  <strong>Approach:</strong> The evaluate steering function essentially runs all of our system's function code by taking in the raw data, running it through the conversion functions, checking the values for plausability, and creating an output struct called system data that will output to the car's vehicle control front. This function also takes in the steering interface errors (orbis sensor) that also determine the output angle onto the front dashboard. You can think of this function as the glue that brings all the functions together and allows it to output the value we are seeking. 
+  <strong>Approach:</strong> The evaluate steering function essentially runs all of our system's function code by taking in the raw data, running it through the conversion functions, checking the values for plausibility, and creating an output struct called system data that will output to the car's vehicle control front. This function also takes in the steering interface errors (orbis sensor) that also determine the output angle onto the front dashboard. You can think of this function as the glue that brings all the functions together and allows it to output the value we are seeking. 
 </div>
 <pre><code class="language-cpp">// void SteeringSystem::evaluate_steering(const uint32_t analog_raw, const SteeringEncoderConversion_s digital_data, const uint32_t current_millis) {
     // Reset flags
@@ -631,7 +631,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>VCF – Enqueue Steering Data</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Once the steering system its validated output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
+  <strong>Approach:</strong> Once the steering system has validated its output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
 </div>
 <pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
@@ -651,49 +651,307 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>VCF - Constants</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> On the VCF firmware, we have a global project file designated for setting addresses that will be referenced in VCF_Tasks. To ensure every variable is available when the system runs, we define all corresponding constants in our VCF_constants file. The steering system variables are assigned as EEPROM addresses, so the values themselves are not the actual physical values they represent — they are just memory locations. In the VCFTaskConstants namespace, the variables define the sample rate of each component, determining how many times per second each task runs.
 </div>
+<pre><code class="language-cpp">constexpr int BTN_PRESET_READ = 28; // recal button (brightness control on schematic)
+constexpr float STEERING_1_OFFSET = 0;
+
+namespace VCFSystemConstants {
+
+    // Steering System Constants
+    constexpr uint32_t MIN_STEERING_SIGNAL_ANALOG_ADDR = 56; //Raw ADC value from analog sensor at minimum (left) steering angle (calibration) TODO: test and find real values for min&max
+    constexpr uint32_t MAX_STEERING_SIGNAL_ANALOG_ADDR = 60; //Raw ADC value from analog sensor at maximum (right) steering angle
+    constexpr uint32_t MIN_STEERING_SIGNAL_DIGITAL_ADDR = 32; //Raw ADC value from digital sensor at minimum (left) steering angle
+    constexpr uint32_t MAX_STEERING_SIGNAL_DIGITAL_ADDR = 36; //Raw ADC value from digital sensor at maximum (right) steering angle
+
+    constexpr int32_t ANALOG_MIN_WITH_MARGINS_ADDR = 40;
+    constexpr int32_t ANALOG_MAX_WITH_MARGINS_ADDR = 44;
+    constexpr int32_t DIGITAL_MIN_WITH_MARGINS_ADDR = 48;
+    constexpr int32_t DIGITAL_MAX_WITH_MARGINS_ADDR = 52;
+
+    // implausibility values
+    constexpr float ANALOG_TOL = 0.005f; //+- 0.5% error (analog sensor tolerance according to datasheet)
+    constexpr float DIGITAL_TOL_DEG = 0.2f; // +- 0.2 degrees error
+
+    // rate of angle change
+    constexpr float MAX_DTHETA_THRESHOLD = 5.0f; //maximum change in angle since last reading to consider the reading valid
+
+    // degrees per bit
+    constexpr float DEG_PER_COUNT_DIGITAL = 360.0f / 16384.0f;
+    constexpr float DEG_PER_COUNT_ANALOG = 360.0f / 4096.0f;
+}
+
+namespace VCFTaskConstants {
+    constexpr unsigned long CAN_SEND_PRIORITY = 10;
+    constexpr unsigned long CAN_SEND_PERIOD = 2000;               // 2 000 us = 500 Hz
+    constexpr unsigned long DASH_SEND_PERIOD = 100000;            // 100 000 us = 10 Hz
+    constexpr unsigned long DASH_SEND_PRIORITY = 7;
+    constexpr unsigned long DEBUG_PRIORITY = 100;
+    constexpr unsigned long DEBUG_PERIOD = 10000;                 // 10 000 us = 100 Hz
+    constexpr unsigned long STEERING_SEND_PERIOD = 4000;          // 4 000 us = 250 Hz
+    constexpr unsigned long STEERING_SEND_PRIORITY = 25;
+    constexpr unsigned long STEERING_SAMPLE_PERIOD = 1000;        // 1 000 us = 1000 Hz
+    constexpr unsigned long STEERING_SAMPLE_PRIORITY = 10;
+    constexpr unsigned long ETHERNET_SEND_PERIOD = 100000;        // 100 000 us = 10 Hz
+    constexpr unsigned long ETHERNET_SEND_PRIORITY = 20;
+    constexpr unsigned long STEERING_RECALIBRATION_PRIORITY = 150; // TODO: Determine real values for these
+    constexpr unsigned long STEERING_RECALIBRATION_PERIOD = 100000;
+}
+</code></pre>
 </details>
 
 
 <details>
 <summary>VCF - Debug Prints</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> Our debug prints function on VCF_tasks simply allows us to hardware test the values generated from our system after flashing the teensy41 microcontroller. It prints in serial and samples at the rate listed in VCF_constants. You can see the output of these prints in the outcome video of us testing the system. 
 </div>
-<pre><code class="language-cpp">// Coming soon
+<pre><code class="language-cpp">// HT_TASK::TaskResponse debug_print(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{    Serial.println("--------------------------------------------------");
+
+    Serial.println("Steering Sensor Data: ");
+    Serial.print("analog: ");
+    Serial.print(SteeringSystemInstance::instance().get_steering_system_data().analog_raw);
+    Serial.print("|");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().analog_steering_angle);
+    Serial.print("digital: ");
+    Serial.print(SteeringSystemInstance::instance().get_steering_system_data().digital_raw);
+    Serial.print("|");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().digital_steering_angle);
+
+    Serial.print("analog_steering_angle: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().analog_steering_angle);
+    Serial.print("digital_steering_angle: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().digital_steering_angle);
+
+    Serial.print("output_steering_angle: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().output_steering_angle);
+
+    Serial.print("analog_steering_velocity_deg_s: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().analog_steering_velocity_deg_s);
+    Serial.print("digital_steering_velocity_deg_s: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().digital_steering_velocity_deg_s);
+
+    Serial.print("digital_oor_implausibility: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().digital_oor_implausibility);
+    Serial.print("analog_oor_implausibility: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().analog_oor_implausibility);
+    Serial.print("sensor_disagreement_implausibility: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().sensor_disagreement_implausibility);
+    Serial.print("dtheta_exceeded_analog: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().dtheta_exceeded_analog);
+    Serial.print("dtheta_exceeded_digital: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().dtheta_exceeded_digital);
+    Serial.print("both_sensors_fail: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().both_sensors_fail);
+    Serial.print("interface_sensor_error: ");
+    Serial.println(SteeringSystemInstance::instance().get_steering_system_data().interface_sensor_error);
+
+    return HT_TASK::TaskResponse::YIELD;
+}
 </code></pre>
 </details>
 
 <details>
 <summary>VCF - CAN Send</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> Once the steering system has evaluated all data, this task packages the important system values into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus. Additionally, to run our recalibration function, we must send data from the front dashboard which holds all controller button values — this is handled in a separate enqueue function. The output steering angle is passed through a conversion function that rewrites it from a 32-bit float to a signed 8-bit integer, reducing message size and improving throughput. Some variables are omitted from the output message to ensure the full message fits within 32 bits. Lastly, the send function flushes all messages queued by the enqueue functions out onto the CAN bus.
 </div>
+<pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    STEERING_DATA_t msg_out;
+    SteeringSystemData_s steering_system_data = SteeringSystemInstance::instance().get_steering_system_data();
+    msg_out.steering_analog_oor = steering_system_data.analog_oor_implausibility;
+    msg_out.steering_both_sensors_fail = steering_system_data.both_sensors_fail;
+    msg_out.steering_digital_oor = steering_system_data.digital_oor_implausibility;
+    msg_out.steering_dtheta_exceeded_analog = steering_system_data.dtheta_exceeded_analog;
+    msg_out.steering_dtheta_exceeded_digital = steering_system_data.dtheta_exceeded_digital;
+    msg_out.steering_interface_sensor_error = steering_system_data.interface_sensor_error;
+    msg_out.steering_output_steering_angle_ro = HYTECH_steering_output_steering_angle_ro_toS(steering_system_data.output_steering_angle);
+    msg_out.steering_sensor_disagreement = steering_system_data.sensor_disagreement_implausibility;
+    msg_out.steering_analog_raw = steering_system_data.analog_steering_angle;
+    msg_out.steering_digital_raw = steering_system_data.digital_steering_angle;
+
+    CAN_util::enqueue_msg(&msg_out, &Pack_STEERING_DATA_hytech, VCFCANInterfaceImpl::VCFCANInterfaceObjectsInstance::instance().main_can_tx_buffer);
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse send_dash_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    CANInterfaces can_interfaces = VCFCANInterfaceImpl::CANInterfacesInstance::instance();
+    DashInputState_s dash_outputs = can_interfaces.dash_interface.get_dashboard_outputs();
+
+    DASH_INPUT_t msg_out;
+    //for this, add a message for the new button when its here, for now, steering system linked to dim_button.
+    msg_out.dim_button = dash_outputs.btn_dim_read_is_pressed;
+    msg_out.preset_button = dash_outputs.preset_btn_is_pressed;
+    msg_out.mode_button = 0; // dont exist but i dont wanna bother changing can msgs
+    msg_out.motor_controller_cycle_button = dash_outputs.mc_reset_btn_is_pressed;
+    msg_out.start_button = dash_outputs.start_btn_is_pressed;
+    msg_out.data_button_is_pressed = dash_outputs.data_btn_is_pressed;
+    msg_out.left_shifter_button = 0;
+    msg_out.right_shifter_button = dash_outputs.BUTTON_2;
+    msg_out.led_dimmer_button = dash_outputs.brightness_ctrl_btn_is_pressed;
+    msg_out.dash_dial_mode = static_cast&lt;int&gt;(DashboardInterfaceInstance::instance().get_dashboard_outputs().dial_state);
+
+//    Serial.printf("%d %d %d %d %d %d %d %d\n", msg_out.preset_button, msg_out.motor_controller_cycle_button, msg_out.mode_button, msg_out.start_button, msg_out.data_button_is_pressed, msg_out.left_shifter_button, msg_out.right_shifter_button, msg_out.led_dimmer_button);
+
+    CAN_util::enqueue_msg(&msg_out, &Pack_DASH_INPUT_hytech, VCFCANInterfaceImpl::VCFCANInterfaceObjectsInstance::instance().main_can_tx_buffer);
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+namespace VCFCANInterfaceImpl {
+
+    void send_all_CAN_msgs(CANTXBufferType &buffer, FlexCAN_T4_Base *can_interface)
+    {
+        CAN_message_t msg;
+        while (buffer.available()) {
+            CAN_message_t msg;
+            uint8_t buf[sizeof(CAN_message_t)];
+            buffer.pop_front(buf, sizeof(CAN_message_t));
+            memmove(&msg, buf, sizeof(msg)); // NOLINT (memory operations are fine)
+            can_interface->write(msg);
+        }
+    }
+
+}
+</code></pre>
 </details>
 
-
-<details>
-<summary>VCF & VCR - CAN Handle</summary>
-<div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
-</div>
-</details>
 
 
 <details>
 <summary>VCF & VCR - CAN Receive</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> Each CAN receive function follows the same layout: initialize the message from CAN, then call an unpack function to decode it. The first function is on VCR, where it unpacks dashboard buzzer control messaging from VCF, then handles the buzzer activation and sets the calibration state flags. The second function is on VCF, and unpacks the front dashboard button messaging. It then assigns each field to a struct called curr_data, which tracks the status of each button.
 </div>
+<pre><code class="language-cpp">void VCRInterface::receive_dash_control_data(const CAN_message_t &can_msg)
+{
+    DASHBOARD_BUZZER_CONTROL_t unpacked_msg;
+    Unpack_DASHBOARD_BUZZER_CONTROL_hytech(&unpacked_msg, can_msg.buf, can_msg.len);    //NOLINT
+
+    if (unpacked_msg.dash_buzzer_flag) {
+        BuzzerController::getInstance().activate(millis());
+    }
+
+    _is_in_pedals_calibration_state = unpacked_msg.in_pedal_calibration_state;
+    _is_in_steering_calibration_state = unpacked_msg.in_steering_calibration_state;
+
+    if (unpacked_msg.torque_limit_enum_value &lt; ((int) TorqueLimit_e::TCMUX_NUM_TORQUE_LIMITS)) // check for validity
+    {
+        _torque_limit = (TorqueLimit_e) unpacked_msg.torque_limit_enum_value;
+    }
+}
+
+void VCFInterface::receive_dashboard_message(const CAN_message_t &msg, unsigned long curr_millis)
+{
+    DASH_INPUT_t dash_msg;
+    Unpack_DASH_INPUT_hytech(&dash_msg, &msg.buf[0], msg.len);
+    _curr_data.dash_input_state.btn_dim_read_is_pressed = dash_msg.dim_button;
+    _curr_data.dash_input_state.preset_btn_is_pressed = dash_msg.preset_button; // pedal recalibration button
+    _curr_data.dash_input_state.mc_reset_btn_is_pressed = dash_msg.motor_controller_cycle_button;
+    _curr_data.dash_input_state.start_btn_is_pressed = dash_msg.start_button;
+    _curr_data.dash_input_state.data_btn_is_pressed = dash_msg.data_button_is_pressed;
+    // _curr_data.dash_input_state.left_paddle_is_pressed = dash_msg.left_shifter_button;
+    // _curr_data.dash_input_state.right_paddle_is_pressed = dash_msg.right_shifter_button;
+    // _curr_data.dash_input_state.mode_btn_is_pressed = dash_msg.mode_button; // change torque limit
+    _curr_data.dash_input_state.dial_state = static_cast&lt;ControllerMode_e&gt;(dash_msg.dash_dial_mode);
+}
+</code></pre>
 </details>
 
 
 <details>
 <summary>VCR - State Machine</summary>
 <div class="code-description">
+  <strong>Approach:</strong> To recalibrate steering, we create a state machine on VCR that tracks the current vehicle state and determines when the car is ready for recalibration. There are two relevant states. <strong>WANTING_RECALIBRATE_STEERING</strong> is entered when the calibrate steering button is pressed (determined in CAN receive). If the button is released, the state falls back to <strong>TRACTIVE_SYSTEM_NOT_ACTIVE</strong>, the default state when high voltage is off. If the button stays pressed for over 3 seconds, the state transitions to <strong>RECALIBRATING_STEERING</strong>. In that state, as long as the button remains held, it continuously calls the send steering recalibration message function. The helper functions handle the entry and exit logic for each state: recording a timestamp when a state is entered, and resetting it on exit.
+</div>
+<pre><code class="language-cpp">VehicleState_e VehicleStateMachine::tick_state_machine(unsigned long current_millis)
+{
+    switch (_current_state)
+    {
+        case VehicleState_e::WANTING_RECALIBRATE_STEERING:
+        {
+            _command_drivetrain(false, false);
+
+            if (!_is_calibrate_steering_button_pressed())
+            {
+                _set_state(VehicleState_e::TRACTIVE_SYSTEM_NOT_ACTIVE, current_millis);
+            }
+
+            if (_is_calibrate_steering_button_pressed() && (current_millis - _last_entered_steering_waiting_state_ms > 3000))
+            {
+                _set_state(VehicleState_e::RECALIBRATING_STEERING, current_millis);
+            }
+
+            break;
+        }
+        case VehicleState_e::RECALIBRATING_STEERING:
+        {
+            _command_drivetrain(false, false);
+
+            if (!_is_calibrate_steering_button_pressed())
+            {
+                _set_state(VehicleState_e::TRACTIVE_SYSTEM_NOT_ACTIVE, current_millis);
+            }
+
+            if (_is_calibrate_steering_button_pressed())
+            {
+                _send_recalibrate_steering_message();
+            }
+
+            break;
+        }
+    }
+    return _current_state;
+}
+
+void VehicleStateMachine::_set_state(VehicleState_e new_state, unsigned long curr_millis)
+{
+    _handle_exit_logic(_current_state, curr_millis);
+    _current_state = new_state;
+    _handle_entry_logic(_current_state, curr_millis);
+}
+
+void VehicleStateMachine::_handle_exit_logic(VehicleState_e prev_state, unsigned long curr_millis)
+{
+    switch (prev_state)
+    {
+        case VehicleState_e::WANTING_RECALIBRATE_STEERING:
+            _last_entered_steering_waiting_state_ms = 0;
+            break;
+        case VehicleState_e::RECALIBRATING_STEERING:
+            _last_entered_steering_waiting_state_ms = 0;
+            break;
+        default:
+            break;
+    }
+}
+
+void VehicleStateMachine::_handle_entry_logic(VehicleState_e new_state, unsigned long curr_millis)
+{
+    switch (new_state)
+    {
+        case VehicleState_e::WANTING_RECALIBRATE_STEERING:
+            _last_entered_steering_waiting_state_ms = curr_millis;
+            break;
+        case VehicleState_e::RECALIBRATING_STEERING:
+            break;
+        default:
+            break;
+    }
+}
+</code></pre>
+</details>
+
+
+<details>
+<summary>VCR - CAN Send</summary>
+<div class="code-description">
   <strong>Approach:</strong> [Coming soon]
 </div>
+<pre><code class="language-cpp">// Coming soon
+</code></pre>
 </details>
 
 
