@@ -661,6 +661,8 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <div class="code-description">
   <strong>Approach:</strong> [Coming soon]
 </div>
+<pre><code class="language-cpp">// Coming soon
+</code></pre>
 </details>
 
 <details>
