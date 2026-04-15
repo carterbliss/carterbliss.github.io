@@ -329,7 +329,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Unit Tests</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome — <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected.
+  <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome: <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected.
 </div>
 <pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
 #include &lt;gtest/gtest.h&gt;
@@ -631,7 +631,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>VCF – Enqueue Steering Data</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Once the steering system has validated its output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
+  <strong>Approach:</strong> Once the steering system has validated its output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates: evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
 </div>
 <pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
@@ -651,7 +651,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>VCF - Constants</summary>
 <div class="code-description">
-  <strong>Approach:</strong> On the VCF firmware, we have a global project file designated for setting addresses that will be referenced in VCF_Tasks. To ensure every variable is available when the system runs, we define all corresponding constants in our VCF_constants file. The steering system variables are assigned as EEPROM addresses, so the values themselves are not the actual physical values they represent — they are just memory locations. In the VCFTaskConstants namespace, the variables define the sample rate of each component, determining how many times per second each task runs.
+  <strong>Approach:</strong> On the VCF firmware, we have a global project file designated for setting addresses that will be referenced in VCF_Tasks. To ensure every variable is available when the system runs, we define all corresponding constants in our VCF_constants file. The steering system variables are assigned as EEPROM addresses, so the values themselves are not the actual physical values they represent: they are just memory locations. In the VCFTaskConstants namespace, the variables define the sample rate of each component, determining how many times per second each task runs.
 </div>
 <pre><code class="language-cpp">constexpr int BTN_PRESET_READ = 28; // recal button (brightness control on schematic)
 constexpr float STEERING_1_OFFSET = 0;
@@ -755,7 +755,7 @@ namespace VCFTaskConstants {
 <details>
 <summary>VCF - CAN Send</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Once the steering system has evaluated all data, this task packages the important system values into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates — evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus. Additionally, to run our recalibration function, we must send data from the front dashboard which holds all controller button values — this is handled in a separate enqueue function. The output steering angle is passed through a conversion function that rewrites it from a 32-bit float to a signed 8-bit integer, reducing message size and improving throughput. Some variables are omitted from the output message to ensure the full message fits within 32 bits. Lastly, the send function flushes all messages queued by the enqueue functions out onto the CAN bus.
+  <strong>Approach:</strong> Once the steering system has evaluated all data, this task packages the important system values into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates: evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus. Additionally, to run our recalibration function, we must send data from the front dashboard which holds all controller button values: this is handled in a separate enqueue function. The output steering angle is passed through a conversion function that rewrites it from a 32-bit float to a signed 8-bit integer, reducing message size and improving throughput. Some variables are omitted from the output message to ensure the full message fits within 32 bits. Lastly, the send function flushes all messages queued by the enqueue functions out onto the CAN bus.
 </div>
 <pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
@@ -821,9 +821,32 @@ namespace VCFCANInterfaceImpl {
 
 
 <details>
-<summary>VCF & VCR - CAN Receive</summary>
+<summary>VCF - CAN Receive</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Each CAN receive function follows the same layout: initialize the message from CAN, then call an unpack function to decode it. The first function is on VCR, where it unpacks dashboard buzzer control messaging from VCF, then handles the buzzer activation and sets the calibration state flags. The second function is on VCF, and unpacks the front dashboard button messaging. It then assigns each field to a struct called curr_data, which tracks the status of each button.
+  <strong>Approach:</strong> The VCF CAN receive function follows the standard layout: initialize the message from CAN, then call an unpack function to decode it. It unpacks the DASH_INPUT message from the dashboard and assigns each button and dial field to a struct called curr_data, which tracks the live status of each input.
+</div>
+<pre><code class="language-cpp">void VCFInterface::receive_dashboard_message(const CAN_message_t &msg, unsigned long curr_millis)
+{
+    DASH_INPUT_t dash_msg;
+    Unpack_DASH_INPUT_hytech(&dash_msg, &msg.buf[0], msg.len);
+    _curr_data.dash_input_state.btn_dim_read_is_pressed = dash_msg.dim_button;
+    _curr_data.dash_input_state.preset_btn_is_pressed = dash_msg.preset_button; // pedal recalibration button
+    _curr_data.dash_input_state.mc_reset_btn_is_pressed = dash_msg.motor_controller_cycle_button;
+    _curr_data.dash_input_state.start_btn_is_pressed = dash_msg.start_button;
+    _curr_data.dash_input_state.data_btn_is_pressed = dash_msg.data_button_is_pressed;
+    // _curr_data.dash_input_state.left_paddle_is_pressed = dash_msg.left_shifter_button;
+    // _curr_data.dash_input_state.right_paddle_is_pressed = dash_msg.right_shifter_button;
+    // _curr_data.dash_input_state.mode_btn_is_pressed = dash_msg.mode_button; // change torque limit
+    _curr_data.dash_input_state.dial_state = static_cast&lt;ControllerMode_e&gt;(dash_msg.dash_dial_mode);
+}
+</code></pre>
+</details>
+
+
+<details>
+<summary>VCR - CAN Receive</summary>
+<div class="code-description">
+  <strong>Approach:</strong> The VCR CAN receive function unpacks the DASHBOARD_BUZZER_CONTROL message from VCF. It handles buzzer activation and sets the calibration state flags that the VCR state machine reads to determine whether a steering recalibration has been triggered.
 </div>
 <pre><code class="language-cpp">void VCRInterface::receive_dash_control_data(const CAN_message_t &can_msg)
 {
@@ -841,21 +864,6 @@ namespace VCFCANInterfaceImpl {
     {
         _torque_limit = (TorqueLimit_e) unpacked_msg.torque_limit_enum_value;
     }
-}
-
-void VCFInterface::receive_dashboard_message(const CAN_message_t &msg, unsigned long curr_millis)
-{
-    DASH_INPUT_t dash_msg;
-    Unpack_DASH_INPUT_hytech(&dash_msg, &msg.buf[0], msg.len);
-    _curr_data.dash_input_state.btn_dim_read_is_pressed = dash_msg.dim_button;
-    _curr_data.dash_input_state.preset_btn_is_pressed = dash_msg.preset_button; // pedal recalibration button
-    _curr_data.dash_input_state.mc_reset_btn_is_pressed = dash_msg.motor_controller_cycle_button;
-    _curr_data.dash_input_state.start_btn_is_pressed = dash_msg.start_button;
-    _curr_data.dash_input_state.data_btn_is_pressed = dash_msg.data_button_is_pressed;
-    // _curr_data.dash_input_state.left_paddle_is_pressed = dash_msg.left_shifter_button;
-    // _curr_data.dash_input_state.right_paddle_is_pressed = dash_msg.right_shifter_button;
-    // _curr_data.dash_input_state.mode_btn_is_pressed = dash_msg.mode_button; // change torque limit
-    _curr_data.dash_input_state.dial_state = static_cast&lt;ControllerMode_e&gt;(dash_msg.dash_dial_mode);
 }
 </code></pre>
 </details>
@@ -984,7 +992,7 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 <details>
 <summary>HT-PROTO - PCAN Library</summary>
 <div class="code-description">
-  <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-Proto repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running — including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
+  <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-Proto repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running: including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
 </div>
 
 <style>
@@ -1016,17 +1024,17 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-steering-data-symbol.png" alt="STEERING_DATA symbol properties">
-      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-steering-data-signals.png" alt="STEERING_DATA signal definitions">
-      <figcaption>Signal definitions — bit position, length, and type for each field</figcaption>
+      <figcaption>Signal definitions: bit position, length, and type for each field</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-steering-data-layout.png" alt="STEERING_DATA bit layout">
-      <figcaption>Bit layout — 10 signals packed across 7 bytes</figcaption>
+      <figcaption>Bit layout: 10 signals packed across 7 bytes</figcaption>
     </figure>
   </div>
 </div>
@@ -1036,17 +1044,17 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-dashboard-buzzer-symbol.png" alt="DASHBOARD_BUZZER_CONTROL symbol properties">
-      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-dashboard-buzzer-signals.png" alt="DASHBOARD_BUZZER_CONTROL signal definitions">
-      <figcaption>Signal definitions — calibration state flags and buzzer control</figcaption>
+      <figcaption>Signal definitions: calibration state flags and buzzer control</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-dashboard-buzzer-layout.png" alt="DASHBOARD_BUZZER_CONTROL bit layout">
-      <figcaption>Bit layout — 4 signals packed into 2 bytes</figcaption>
+      <figcaption>Bit layout: 4 signals packed into 2 bytes</figcaption>
     </figure>
   </div>
 </div>
@@ -1056,27 +1064,27 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-dash-input-symbol.png" alt="DASH_INPUT symbol properties">
-      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-dash-input-signals.png" alt="DASH_INPUT signal definitions">
-      <figcaption>Signal definitions — all dashboard button states and dial mode</figcaption>
+      <figcaption>Signal definitions: all dashboard button states and dial mode</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-dash-input-layout.png" alt="DASH_INPUT bit layout">
-      <figcaption>Bit layout — 10 button and dial signals packed into 3 bytes</figcaption>
+      <figcaption>Bit layout: 10 button and dial signals packed into 3 bytes</figcaption>
     </figure>
   </div>
 </div>
 
 <div class="pcan-group">
-  <div class="pcan-group-title">vehicle_stateE <span class="pcan-group-subtitle">Enum — vehicle state machine values</span></div>
+  <div class="pcan-group-title">vehicle_stateE <span class="pcan-group-subtitle">Enum: vehicle state machine values</span></div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-vehicle-state-enum.png" alt="vehicle_stateE enum definition">
-      <figcaption>Enum definition — values 0–7 mapping to vehicle states, including the two steering recalibration states used by the VCR state machine</figcaption>
+      <figcaption>Enum definition: values 0–7 mapping to vehicle states, including the two steering recalibration states used by the VCR state machine</figcaption>
     </figure>
   </div>
 </div>
