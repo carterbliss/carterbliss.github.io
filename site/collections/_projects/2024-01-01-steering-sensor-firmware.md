@@ -948,9 +948,35 @@ void VehicleStateMachine::_handle_entry_logic(VehicleState_e new_state, unsigned
 <details>
 <summary>VCR - CAN Send</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> In terms of firmware, CAN send from VCR has the same logistics as VCF, it just matters what values we are sending. Since for this system we want VCR to validate our steering recalibration based on the vehicle state machine, outputting the steering calibration state in one message, and the state of the vehicle in another. Once this is unpacked in in the CAN Recieve section, you can see how this initializes the recalibration function in VCF tasks. Full circle moment!
 </div>
-<pre><code class="language-cpp">// Coming soon
+<pre><code class="language-cpp">void VCFInterface::send_buzzer_start_message()
+{
+    DASHBOARD_BUZZER_CONTROL_t ctrl = {};
+    ctrl.dash_buzzer_flag = true;
+    ctrl.in_pedal_calibration_state = false;
+    ctrl.in_steering_calibration_state = false;
+    ctrl.torque_limit_enum_value = 0xFF; // MAX_VALUE indicates "ignore this value" //NOLINT
+    CAN_util::enqueue_msg(&ctrl, &Pack_DASHBOARD_BUZZER_CONTROL_hytech, VCRCANInterfaceImpl::telem_can_tx_buffer);
+    Serial.println("BUZZER START MESSAGE SENT");
+}
+void VCFInterface::send_recalibrate_steering_message()
+{
+    DASHBOARD_BUZZER_CONTROL_t ctrl = {};
+    ctrl.dash_buzzer_flag = false;
+    ctrl.in_pedal_calibration_state = false;
+    ctrl.in_steering_calibration_state = true;
+    ctrl.torque_limit_enum_value = 0xFF; // MAX_VALUE indicates "ignore this value" //NOLINT
+    CAN_util::enqueue_msg(&ctrl, &Pack_DASHBOARD_BUZZER_CONTROL_hytech, VCRCANInterfaceImpl::telem_can_tx_buffer);
+}
+void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, DrivetrainState_e drivetrain_state, bool db_is_in_ctrl)
+{
+    CAR_STATES_t state = {};
+    state.vehicle_state = static_cast<uint8_t>(vehicle_state);
+    state.drivetrain_state = static_cast<uint8_t>(drivetrain_state);
+    state.drivebrain_in_control = db_is_in_ctrl;
+    CAN_util::enqueue_msg(&state, &Pack_CAR_STATES_hytech, VCRCANInterfaceImpl::telem_can_tx_buffer);
+}
 </code></pre>
 </details>
 
@@ -958,8 +984,103 @@ void VehicleStateMachine::_handle_entry_logic(VehicleState_e new_state, unsigned
 <details>
 <summary>HT-PROTO - PCAN Library</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-Proto repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running — including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
 </div>
+
+<style>
+.pcan-group { margin: 20px 0 28px; }
+.pcan-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.03em;
+  padding: 0 20px 10px;
+  border-bottom: 1px solid #21262d;
+  margin-bottom: 14px;
+}
+.pcan-group-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b949e;
+  margin-left: 8px;
+}
+.pcan-row { display: flex; gap: 14px; padding: 0 20px 14px; flex-wrap: wrap; }
+.pcan-row figure { margin: 0; flex: 1; min-width: 260px; text-align: center; }
+.pcan-row figure.full { flex: 0 0 100%; }
+.pcan-row img { width: 100%; border-radius: 6px; border: 1px solid #30363d; }
+.pcan-row figcaption { font-size: 12px; color: #8b949e; margin-top: 6px; }
+</style>
+
+<div class="pcan-group">
+  <div class="pcan-group-title">STEERING_DATA <span class="pcan-group-subtitle">CAN ID: 0x41F · 7 bytes · VCF → broadcast</span></div>
+  <div class="pcan-row">
+    <figure>
+      <img src="/images/pcan-steering-data-symbol.png" alt="STEERING_DATA symbol properties">
+      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+    </figure>
+    <figure>
+      <img src="/images/pcan-steering-data-signals.png" alt="STEERING_DATA signal definitions">
+      <figcaption>Signal definitions — bit position, length, and type for each field</figcaption>
+    </figure>
+  </div>
+  <div class="pcan-row">
+    <figure class="full">
+      <img src="/images/pcan-steering-data-layout.png" alt="STEERING_DATA bit layout">
+      <figcaption>Bit layout — 10 signals packed across 7 bytes</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="pcan-group">
+  <div class="pcan-group-title">DASHBOARD_BUZZER_CONTROL <span class="pcan-group-subtitle">CAN ID: 0x7F1 · 2 bytes · VCF → VCR</span></div>
+  <div class="pcan-row">
+    <figure>
+      <img src="/images/pcan-dashboard-buzzer-symbol.png" alt="DASHBOARD_BUZZER_CONTROL symbol properties">
+      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+    </figure>
+    <figure>
+      <img src="/images/pcan-dashboard-buzzer-signals.png" alt="DASHBOARD_BUZZER_CONTROL signal definitions">
+      <figcaption>Signal definitions — calibration state flags and buzzer control</figcaption>
+    </figure>
+  </div>
+  <div class="pcan-row">
+    <figure class="full">
+      <img src="/images/pcan-dashboard-buzzer-layout.png" alt="DASHBOARD_BUZZER_CONTROL bit layout">
+      <figcaption>Bit layout — 4 signals packed into 2 bytes</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="pcan-group">
+  <div class="pcan-group-title">DASH_INPUT <span class="pcan-group-subtitle">CAN ID: 0x300 · 3 bytes · Dashboard → VCF</span></div>
+  <div class="pcan-row">
+    <figure>
+      <img src="/images/pcan-dash-input-symbol.png" alt="DASH_INPUT symbol properties">
+      <figcaption>Symbol properties — CAN ID, data length, direction</figcaption>
+    </figure>
+    <figure>
+      <img src="/images/pcan-dash-input-signals.png" alt="DASH_INPUT signal definitions">
+      <figcaption>Signal definitions — all dashboard button states and dial mode</figcaption>
+    </figure>
+  </div>
+  <div class="pcan-row">
+    <figure class="full">
+      <img src="/images/pcan-dash-input-layout.png" alt="DASH_INPUT bit layout">
+      <figcaption>Bit layout — 10 button and dial signals packed into 3 bytes</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="pcan-group">
+  <div class="pcan-group-title">vehicle_stateE <span class="pcan-group-subtitle">Enum — vehicle state machine values</span></div>
+  <div class="pcan-row">
+    <figure class="full">
+      <img src="/images/pcan-vehicle-state-enum.png" alt="vehicle_stateE enum definition">
+      <figcaption>Enum definition — values 0–7 mapping to vehicle states, including the two steering recalibration states used by the VCR state machine</figcaption>
+    </figure>
+  </div>
+</div>
+
 </details>
 
 
