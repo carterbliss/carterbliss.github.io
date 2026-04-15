@@ -972,8 +972,8 @@ void VCFInterface::send_recalibrate_steering_message()
 void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, DrivetrainState_e drivetrain_state, bool db_is_in_ctrl)
 {
     CAR_STATES_t state = {};
-    state.vehicle_state = static_cast<uint8_t>(vehicle_state);
-    state.drivetrain_state = static_cast<uint8_t>(drivetrain_state);
+    state.vehicle_state = static_cast&lt;uint8_t&gt;(vehicle_state);
+    state.drivetrain_state = static_cast&lt;uint8_t&gt;(drivetrain_state);
     state.drivebrain_in_control = db_is_in_ctrl;
     CAN_util::enqueue_msg(&state, &Pack_CAR_STATES_hytech, VCRCANInterfaceImpl::telem_can_tx_buffer);
 }
