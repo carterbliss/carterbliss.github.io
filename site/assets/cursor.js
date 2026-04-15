@@ -134,6 +134,21 @@
     }
   });
 
+  // Keep cursor visible during mousedown/mouseup (e.g. clicking images)
+  document.addEventListener('mousedown', (e) => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    visible = true;
+  });
+  document.addEventListener('mouseup', (e) => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    visible = true;
+  });
+
+  // Prevent native image drag from stealing mousemove events
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.tagName === 'IMG') e.preventDefault();
+  });
+
   document.addEventListener('mouseleave', () => { visible = false; });
 
   document.addEventListener('mouseover', (e) => {
