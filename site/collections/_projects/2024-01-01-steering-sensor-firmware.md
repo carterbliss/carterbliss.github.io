@@ -1172,16 +1172,18 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 
 ## Outcome
 
+Steering system correctly outputted converted angle values, plausibility checks, and ran recalibration through checking vehicle state machine. With the outputted values sent to drivebrain through CAN & Ethernet messaging, we were able to implement "mode 4", which intakes steering values, tire load cells, pedals data, and outputs a calculated torque to each wheel. Because of the steering system enabling "mode 4", HyTech's vehicle HTX was able to decrease 0.2 seconds on average in the skid pad event at Formula South on April 11th, 2026.
+
 <figure style="margin:16px 0; text-align:center;">
   <video muted controls style="width:100%; border-radius:8px; border:1px solid #30363d;">
     <source src="/assets/steering-car-driving.mov" type="video/mp4">
   </video>
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">HTX driving with the steering sensor system active</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">HTX driving with the steering sensor system active during skid pad at Formula South 2026</figcaption>
 </figure>
 
 <figure style="margin:16px 0; text-align:center;">
   <video muted controls style="width:100%; border-radius:8px; border:1px solid #30363d;">
     <source src="/assets/steering-serial-debug.mov" type="video/mp4">
   </video>
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Serial debug output confirming the steering system functioning correctly</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Serial debug output confirming the steering system functioning correctly post recalibration</figcaption>
 </figure>
