@@ -206,14 +206,14 @@ struct SteeringSystemData_s
         std::swap(_steeringParams.min_steering_signal_analog, _steeringParams.max_steering_signal_analog);
     }
     _steeringParams.span_signal_digital = _steeringParams.max_steering_signal_digital-_steeringParams.min_steering_signal_digital;
-    _steeringParams.analog_tol_deg = static_cast<float>(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
-    _steeringParams.digital_tol_deg = static_cast<float>(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
-    _steeringParams.digital_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
-    _steeringParams.analog_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
-    _steeringParams.analog_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
-    _steeringParams.analog_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
-    _steeringParams.digital_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
-    _steeringParams.digital_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
+    _steeringParams.analog_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
+    _steeringParams.digital_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
+    _steeringParams.digital_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
+    _steeringParams.analog_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
+    _steeringParams.analog_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
+    _steeringParams.analog_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
+    _steeringParams.digital_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
+    _steeringParams.digital_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
 
     if ( _steeringParams.span_signal_analog > 2000)
     {
@@ -228,10 +228,10 @@ struct SteeringSystemData_s
 }
 
 void SteeringSystem::update_observed_steering_limits(const uint32_t analog_raw, const uint32_t digital_raw) {
-    min_observed_analog = std::min(min_observed_analog, static_cast<uint32_t>(analog_raw));
-    max_observed_analog = std::max(max_observed_analog, static_cast<uint32_t>(analog_raw));
-    min_observed_digital = std::min(min_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT should both be uint32_t
-    max_observed_digital = std::max(max_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT ^
+    min_observed_analog = std::min(min_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
+    max_observed_analog = std::max(max_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
+    min_observed_digital = std::min(min_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT should both be uint32_t
+    max_observed_digital = std::max(max_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT ^
 }
 </code></pre>
 </details>
@@ -335,8 +335,8 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
         _steeringSystemData.dtheta_exceeded_digital = _evaluate_steering_dtheta_exceeded(_steeringSystemData.digital_steering_velocity_deg_s); // use digital velocity for dtheta check since it's more precise and we are concerned about large changes in angle that could be caused by noise in the analog sensor
 
         //Check if either sensor is out of range (pass in raw)
-        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast<uint32_t>(analog_raw));
-        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast<uint32_t>(digital_raw)) || digital_fault;
+        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast&lt;uint32_t&gt;(analog_raw));
+        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast&lt;uint32_t&gt;(digital_raw)) || digital_fault;
 
         //Check if there is too much of a difference between sensor values
         float sensor_difference = std::fabs(_steeringSystemData.analog_steering_angle - _steeringSystemData.digital_steering_angle);
