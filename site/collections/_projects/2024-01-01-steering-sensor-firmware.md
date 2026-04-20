@@ -7,7 +7,7 @@ image: '/images/ht09.png'
 
 ## Overview
 
-For HyTech's 2026 FSAE Vehicle: HTX, we needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I designed and implemented the steering system onto the HTX Vehicle Control Front. Our system outputs steering angle conversions to the front dashboard, run plausibility checks for our sensor & interface, recalibrates through analyzing vehicle state from Vehicle Control Rear, and sends these values to drivebrain via CAN & Ethernet. 
+For HyTech's 2026 FSAE Vehicle: HTX, the electrical subteam needed a steering sensor system to intake values from both an analog and digital steering sensor and run real-time angle critical data for vehicle dynamics, traction control, and telemetry. To accomplish this, I designed and implemented the steering system onto the HTX Vehicle Control Front. System outputs steering angle conversions to the front dashboard, run plausibility checks for our sensor & interface, recalibrates through analyzing vehicle state from Vehicle Control Rear, and sends these values to drivebrain via CAN & Ethernet. 
 
 
 ## Technical Details
@@ -879,36 +879,6 @@ namespace VCFCANInterfaceImpl {
 <details>
 <summary>CAN Receive</summary>
 <div class="code-description">
-  <strong>Approach:</strong> The VCF CAN receive function follows the standard layout: initialize the message from CAN, then call an unpack function to decode it. It unpacks the DASH_INPUT message from the dashboard and assigns each button and dial field to a struct called curr_data, which tracks the live status of each input.
-</div>
-<pre><code class="language-cpp">void VCFInterface::receive_dashboard_message(const CAN_message_t &msg, unsigned long curr_millis)
-{
-    DASH_INPUT_t dash_msg;
-    Unpack_DASH_INPUT_hytech(&dash_msg, &msg.buf[0], msg.len);
-    _curr_data.dash_input_state.btn_dim_read_is_pressed = dash_msg.dim_button;
-    _curr_data.dash_input_state.preset_btn_is_pressed = dash_msg.preset_button; // pedal recalibration button
-    _curr_data.dash_input_state.mc_reset_btn_is_pressed = dash_msg.motor_controller_cycle_button;
-    _curr_data.dash_input_state.start_btn_is_pressed = dash_msg.start_button;
-    _curr_data.dash_input_state.data_btn_is_pressed = dash_msg.data_button_is_pressed;
-    // _curr_data.dash_input_state.left_paddle_is_pressed = dash_msg.left_shifter_button;
-    // _curr_data.dash_input_state.right_paddle_is_pressed = dash_msg.right_shifter_button;
-    // _curr_data.dash_input_state.mode_btn_is_pressed = dash_msg.mode_button; // change torque limit
-    _curr_data.dash_input_state.dial_state = static_cast&lt;ControllerMode_e&gt;(dash_msg.dash_dial_mode);
-}
-</code></pre>
-</details>
-
-</div>
-</details>
-
-
-<details class="accordion-group">
-<summary>VCR System Design</summary>
-<div class="accordion-group-body">
-
-<details>
-<summary>CAN Receive</summary>
-<div class="code-description">
   <strong>Approach:</strong> The VCR CAN receive function unpacks the DASHBOARD_BUZZER_CONTROL message from VCF. It handles buzzer activation and sets the calibration state flags that the VCR state machine reads to determine whether a steering recalibration has been triggered.
 </div>
 <pre><code class="language-cpp">void VCRInterface::receive_dash_control_data(const CAN_message_t &can_msg)
@@ -927,6 +897,36 @@ namespace VCFCANInterfaceImpl {
     {
         _torque_limit = (TorqueLimit_e) unpacked_msg.torque_limit_enum_value;
     }
+}
+</code></pre>
+</details>
+
+</div>
+</details>
+
+
+<details class="accordion-group">
+<summary>VCR System Design</summary>
+<div class="accordion-group-body">
+
+<details>
+<summary>CAN Receive</summary>
+<div class="code-description">
+  <strong>Approach:</strong> The VCF CAN receive function follows the standard layout: initialize the message from CAN, then call an unpack function to decode it. It unpacks the DASH_INPUT message from the dashboard and assigns each button and dial field to a struct called curr_data, which tracks the live status of each input.
+</div>
+<pre><code class="language-cpp">void VCFInterface::receive_dashboard_message(const CAN_message_t &msg, unsigned long curr_millis)
+{
+    DASH_INPUT_t dash_msg;
+    Unpack_DASH_INPUT_hytech(&dash_msg, &msg.buf[0], msg.len);
+    _curr_data.dash_input_state.btn_dim_read_is_pressed = dash_msg.dim_button;
+    _curr_data.dash_input_state.preset_btn_is_pressed = dash_msg.preset_button; // pedal recalibration button
+    _curr_data.dash_input_state.mc_reset_btn_is_pressed = dash_msg.motor_controller_cycle_button;
+    _curr_data.dash_input_state.start_btn_is_pressed = dash_msg.start_button;
+    _curr_data.dash_input_state.data_btn_is_pressed = dash_msg.data_button_is_pressed;
+    // _curr_data.dash_input_state.left_paddle_is_pressed = dash_msg.left_shifter_button;
+    // _curr_data.dash_input_state.right_paddle_is_pressed = dash_msg.right_shifter_button;
+    // _curr_data.dash_input_state.mode_btn_is_pressed = dash_msg.mode_button; // change torque limit
+    _curr_data.dash_input_state.dial_state = static_cast&lt;ControllerMode_e&gt;(dash_msg.dash_dial_mode);
 }
 </code></pre>
 </details>
@@ -1159,6 +1159,64 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   </div>
 </div>
 
+</details>
+
+<details>
+<summary>Ethernet Messaging</summary>
+<div class="code-description">
+  <strong>Approach:</strong> Unlike CAN, which sends each message type separately on its own ID, Ethernet bundles all system data into one large Protobuf message and transmits it in a single packet. On VCF, <code>make_vcf_data_msg</code> pulls every field from the steering system data struct and packs them into a <code>hytech_msgs_VCFData_s</code> message, which is then sent over UDP to drivebrain. VCF also receives a VCR data message over Ethernet to get shared state like buzzer status. The message schema itself lives in the HT-Proto repository and is defined in <code>.proto</code> files, which are compiled into C structs used on both ends.
+</div>
+<pre><code class="language-cpp">// VCF Ethernet Interface — packing steering data into outbound Ethernet message
+hytech_msgs_VCFData_s VCFEthernetInterface::make_vcf_data_msg(ADCInterface &ADCInterfaceInstance, DashboardInterface &dashInstance, PedalsSystem &pedalsInstance, SteeringSystem &steeringInstance)
+{
+    out.steering_system_data.analog_raw = steeringInstance.get_steering_system_data().analog_raw;
+    out.steering_system_data.digital_raw = steeringInstance.get_steering_system_data().digital_raw;
+    out.steering_system_data.analog_steering_angle = steeringInstance.get_steering_system_data().analog_steering_angle;
+    out.steering_system_data.digital_steering_angle = steeringInstance.get_steering_system_data().digital_steering_angle;
+    out.steering_system_data.output_steering_angle = steeringInstance.get_steering_system_data().output_steering_angle;
+    out.steering_system_data.analog_steering_velocity_deg_s = steeringInstance.get_steering_system_data().analog_steering_velocity_deg_s;
+    out.steering_system_data.digital_steering_velocity_deg_s = steeringInstance.get_steering_system_data().digital_steering_velocity_deg_s;
+    out.steering_system_data.digital_oor_implausibility = steeringInstance.get_steering_system_data().digital_oor_implausibility;
+    out.steering_system_data.analog_oor_implausibility = steeringInstance.get_steering_system_data().analog_oor_implausibility;
+    out.steering_system_data.sensor_disagreement_implausibility = steeringInstance.get_steering_system_data().sensor_disagreement_implausibility;
+    out.steering_system_data.dtheta_exceeded_analog = steeringInstance.get_steering_system_data().dtheta_exceeded_analog;
+    out.steering_system_data.dtheta_exceeded_digital = steeringInstance.get_steering_system_data().dtheta_exceeded_digital;
+    out.steering_system_data.both_sensors_fail = steeringInstance.get_steering_system_data().both_sensors_fail;
+    out.steering_system_data.interface_sensor_error = steeringInstance.get_steering_system_data().interface_sensor_error;
+    out.steering_system_data.analog_clipped = steeringInstance.get_steering_system_data().analog_clipped;
+    out.steering_system_data.digital_clipped = steeringInstance.get_steering_system_data().digital_clipped;
+}
+
+// VCF receiving VCR data over Ethernet
+void VCFEthernetInterface::receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, VCFData_s &shared_state, unsigned long curr_millis) {
+    shared_state.system_data.buzzer_is_active = msg_in.buzzer_is_active;
+}</code></pre>
+<pre><code class="language-protobuf">// HT-Proto repository — Protobuf schema defining the SteeringSystemData message
+syntax = "proto3";
+package hytech_msgs;
+
+message SteeringSystemData_s
+{
+    uint32 analog_raw = 1;
+    uint32 digital_raw = 2;
+
+    float analog_steering_angle = 3;
+    float digital_steering_angle = 4;
+    float output_steering_angle = 5;
+
+    float analog_steering_velocity_deg_s = 6;
+    float digital_steering_velocity_deg_s = 7;
+
+    bool digital_oor_implausibility = 8;
+    bool analog_oor_implausibility = 9;
+    bool sensor_disagreement_implausibility = 10;
+    bool dtheta_exceeded_analog = 11;
+    bool dtheta_exceeded_digital = 12;
+    bool both_sensors_fail = 13;
+    bool interface_sensor_error = 14;
+    bool analog_clipped = 15;
+    bool digital_clipped = 16;
+}</code></pre>
 </details>
 
 </div>
