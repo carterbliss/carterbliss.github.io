@@ -12,7 +12,7 @@ For HyTech's 2026 FSAE Vehicle: HTX, the electrical subteam needed a steering se
 
 ## Technical Details
 
-The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an Orbis digital sensor and a Phoenix America analog sensor. Microcontroller intakes analog voltage from analog sensor and raw reading from digital digital, then runs our steering system to conduct necessary functions. 
+The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an Orbis digital sensor and a Phoenix America analog sensor. Microcontroller intakes analog to digital conversion value from analog sensor and raw reading from digital digital, then runs our steering system to conduct necessary functions. 
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -1062,7 +1062,7 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 <details>
 <summary>PCAN Library</summary>
 <div class="code-description">
-  <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-Proto repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running: including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
+  <strong>Approach:</strong> For CAN messaging, we implement all message definitions in the HT-CAN repository using the PCAN Symbol Editor. This defines the structure of every message sent on the bus and feeds into Foxglove, allowing us to virtually read live values from the car while it's running: including steering sensor data, calibration states, and vehicle states. The three messages relevant to the steering system are shown below, each with their symbol properties, signal definitions, and bit layout.
 </div>
 
 <style>
@@ -1190,8 +1190,11 @@ hytech_msgs_VCFData_s VCFEthernetInterface::make_vcf_data_msg(ADCInterface &ADCI
 // VCF receiving VCR data over Ethernet
 void VCFEthernetInterface::receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, VCFData_s &shared_state, unsigned long curr_millis) {
     shared_state.system_data.buzzer_is_active = msg_in.buzzer_is_active;
-}</code></pre>
-<pre><code class="language-protobuf">// HT-Proto repository — Protobuf schema defining the SteeringSystemData message
+}
+
+// ── HT-Proto Repository ─────────────────────────────────────────────────────
+// Protobuf schema — compiled into C structs used on VCF and drivebrain
+
 syntax = "proto3";
 package hytech_msgs;
 
@@ -1216,6 +1219,21 @@ message SteeringSystemData_s
     bool interface_sensor_error = 14;
     bool analog_clipped = 15;
     bool digital_clipped = 16;
+}
+
+message VCFData_s
+{
+    FrontLoadCellData_s front_loadcell_data = 1;
+    FrontSusPotData_s front_suspot_data = 2;
+    SteeringSensorData_s steering_data = 3;
+    BrakePressureSensorData_s brake_pressure_data = 4;
+    DashInputState_s dash_input_state = 5; // Direct button signals from the dashboard IOExpander
+    VCFEthernetLinkData_s vcf_ethernet_link_data = 6;
+	SteeringSystemData_s steering_system_data = 7;
+    PedalsSystemData_s pedals_system_data = 8;
+    VCFShutdownSensingData_s vcf_shutdown_data = 9;
+    FWVersionInfo_s firmware_version_info = 10;
+    Versions msg_versions = 11;
 }</code></pre>
 </details>
 
