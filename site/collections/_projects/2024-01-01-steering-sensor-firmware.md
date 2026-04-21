@@ -174,7 +174,7 @@ struct SteeringSystemData_s
 <summary>Recalibrate</summary>
 <div class="code-description">
 
-  <strong>Approach:</strong> For our steering system, we recalibrate the digital and anlog sensor to account for physical sensor altercations (rattling, shifting, etc). Our system constantly reads observed relative extremeties through asnyc tasks, then once recalibration is trigged we write the new values to our steering params. We also run checks to observe if a min/max is at the physical sensor max: indicating a sensor clip. When the sensor clips it insinuates a full rotation and value reset, but our system would then cling to this min/max as it misinterprets the actual steering angle min/max. We also check if the span is marginally greater than the possible steering angle span allows, in which case the sensor has moved and is clinging to improbable adc/raw values. 
+  <strong>Approach:</strong> For our steering system, we recalibrate the digital and anlog sensor to account for physical sensor altercations (rattling, shifting, etc). Our system constantly reads observed relative extremeties through asnyc tasks, then once recalibration is trigged we write the new values to our steering params. We also run checks to observe if a min/max is at the physical sensor max: indicating a sensor clip. When the sensor clips it indicates a full rotation and value reset, but our system would then cling to this min/max as it misinterprets the actual steering angle min/max. We also check if the span is marginally greater than the possible steering angle span allows, in which case the sensor has moved and is clinging to improbable adc/raw values. After our minimum and maximum is set, we then calculate the rest of the correlating parameters for the steering system.
 </div>
 <pre><code class="language-cpp">void SteeringSystem::recalibrate_steering_digital() {
     if (min_observed_analog == 0)
@@ -240,7 +240,7 @@ void SteeringSystem::update_observed_steering_limits(const uint32_t analog_raw, 
 <details>
 <summary>Converting Values</summary>
 <div class="code-description">
-  <strong>Approach:</strong> To convert from adc to a steering angle between -90 and 90, we simply subtract the midpoint adc value from whatever raw value we currently read, then multiply it by the degrees per count of adc (which is determined in recalibrate steering). Digital reads positively when moving left to right, so for consistency the convert digital sensor is flipped. 
+  <strong>Approach:</strong> To convert from adc/raw to a steering angle between -90 and 90, we simply subtract the midpoint adc value from whatever raw value we currently read, then multiply it by the degrees per count of adc (which is determined in recalibrate steering). Digital reads positively when moving right to left, so for consistency the conversion for digital sensor is flipped. 
 </div>
 <pre><code class="language-cpp">float SteeringSystem::_convert_digital_sensor(const uint32_t digital_raw) {
     // Same logic for digital
@@ -276,7 +276,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Evaluating Steering Speed</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function we check whether or not the change in angle is greater than the value in steering parameters. 
+  <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function we check whether or not the change in angle is greater than the value in steering parameters. This hard-coded value is set in VCF constants. You may have noticed it was not set in the recalibrate function, the VCF constant values are established in the VCF setup interfaces function in VCF tasks. 
 </div>
 <pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_dtheta_exceeded(float dtheta){
     return (fabs(dtheta) &gt; _steeringParams.max_dtheta_threshold);
@@ -288,7 +288,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Evaluate Steering</summary>
 <div class="code-description">
-  <strong>Approach:</strong> The evaluate steering function essentially runs all of our system's function code by taking in the raw data, running it through the conversion functions, checking the values for plausibility, and creating an output struct called system data that will output to the car's vehicle control front. This function also takes in the steering interface errors (orbis sensor) that also determine the output angle onto the front dashboard. You can think of this function as the glue that brings all the functions together and allows it to output the value we are seeking. 
+  <strong>Approach:</strong> The evaluate steering function essentially runs all of our system's function code by taking in the raw data, running it through the conversion functions, checking the values for plausibility, and creating an output struct called system data that will output to the car's vehicle control front. This function also takes in the steering interface errors (orbis sensor) that also determine the output angle onto the front dashboard. You can think of this function as the glue that brings all the functions together and allows it to output the important data in a output structure. 
 </div>
 <pre><code class="language-cpp">void SteeringSystem::evaluate_steering(const uint32_t analog_raw, const SteeringEncoderReading_s digital_data, const uint32_t current_millis) {
     // Reset flags
@@ -378,7 +378,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Unit Tests</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome: <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected.
+  <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome: <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected. This does not show all of the unit tests, but does give an idea for the approach. 
 </div>
 <pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
 #include &lt;gtest/gtest.h&gt;
@@ -550,6 +550,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
     EXPECT_TRUE(data.analog_oor_implausibility);
     EXPECT_TRUE(data.digital_oor_implausibility);
     EXPECT_TRUE(data.both_sensors_fail);
+}
 }
 </code></pre>
 </details>
