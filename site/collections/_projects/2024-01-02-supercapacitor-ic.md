@@ -7,13 +7,13 @@ image: '/images/supercap-cover.png'
 
 ## Overview
 
-As a systems design member of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our circuit charges and discharges the supercapacitor at a constant 10µA current while reading voltage and current to calculate capacitance. Switching is handled by MOSFETs driven by a pulse wave monitor, comparators, and a microcontroller. In summer 2026, the fabricated IC will fly aboard a NASA balloon into the stratosphere — meaning every component must survive temperatures down to -60°C. This is an ongoing project and will be updated as work progresses.
+As a systems design member of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our circuit charges and discharges the supercapacitor at a constant 10µA current while reading voltage and current to calculate supercapacitor stability and resistance over time. Switching is handled by MOSFETs driven by a pulse wave monitor, comparators, and a microcontroller. In summer 2026, the fabricated IC will fly aboard a NASA balloon into the stratosphere( meaning every component must survive temperatures down to -60°C).
 
 ## Technical Details
 
-The core requirement is constant-current charge and discharge at 10µA. For charging, this means selecting a dedicated constant-current chip. For discharging, it means designing a custom subunit using automotive-to-milspec grade components that can hold the current steady as the supercapacitor voltage drops.
+The core requirement is constant-current charge and discharge at 10µA. For charging, this means selecting a dedicated constant-current chip and ensuring safeguarding mechanisms for overcharging. For discharging, it means designing a custom subunit using automotive-to-milspec grade components that can hold the current steady as the supercapacitor voltage drops.
 
-As discharge circuit lead, I used my prior PCB experience from HyTech Racing to guide teammates through circuit design fundamentals while building out the discharge section in KiCad.
+As experiment card circuit lead, I used my prior PCB experience from HyTech Racing to guide teammates through circuit design fundamentals while building out the discharge section in KiCad.
 
 ## Design Process
 
@@ -70,7 +70,7 @@ As discharge circuit lead, I used my prior PCB experience from HyTech Racing to 
 <div class="code-description">
   <strong>Approach:</strong> The discharge circuit is built around an op-amp feedback system that forces a constant 10µA from the supercapacitor regardless of how its voltage changes over time. The key insight is that a constant current discharge causes voltage to drop linearly, which is exactly the behavior needed to calculate capacitance from C = I × Δt / ΔV.
   <br><br>
-  The current is set by <strong>R1 (9kΩ)</strong>, the value here sets the discharge current. With a 0.1V reference (V5), the target voltage across R1 is 0.1V, giving I = 0.1V / 9kΩ ≈ 11µA ≈ 10µA. <strong>U3</strong> is an op-amp that compares this 0.1V reference against the actual voltage developing across R1 and drives the gate of <strong>Q1 (NMOS)</strong> to correct deviation: if current rises, Q1 is turned down; if it falls, Q1 is turned up. This feedback loop is what maintains the constant current.
+  The current is set by <strong>R1 (9kΩ)</strong>, the value here sets the discharge current. With a 0.1V reference (V5), the target voltage across R1 is 0.1V, giving I = 0.1V / 9kΩ ≈ 11µA ≈ 10µA. <strong>U3</strong> is an op-amp that compares this 0.1V reference against the actual voltage developing across R1 and drives the gate of <strong>Q1 (NMOS)</strong> to correct deviation: if current rises, Q1 is turned down; if it falls, Q1 is turned up. This feedback loop is what maintains the constant current and ultamitely linear voltage decreasing.
   <br><br>
   <strong>Q2 (NMOS)</strong> acts as the high-side current sense element, isolating the sense path from the main discharge path through <strong>C1 (1.6µF)</strong>. <strong>U1</strong> provides a second comparator stage in the loop for additional stability. <strong>R6 and R7 (both 250kΩ)</strong> form the voltage divider which feeds into the op-amp, and <strong>R2 and R3 (both 4.7kΩ)</strong> set the op-amp feedback gain. <strong>V2 (3.3V)</strong> powers the control circuitry.
 </div>
