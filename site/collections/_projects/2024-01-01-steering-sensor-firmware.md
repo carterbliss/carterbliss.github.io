@@ -335,6 +335,16 @@ EVALUATE STEERING CODE:
 
 
 </code></pre>
+<div style="display:flex; gap:14px; margin:16px 0; flex-wrap:wrap;">
+  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
+    <img src="/images/steering-velocity-raw.png" alt="Steering velocity raw — finite diff, heavy noise" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Raw velocity via finite difference — ±1000+ deg/s noise at full rate</figcaption>
+  </figure>
+  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
+    <img src="/images/steering-velocity-filtered.png" alt="Steering velocity after Butterworth filter — smooth" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Velocity from Butterworth-filtered angle — smooth and usable at 500 Hz</figcaption>
+  </figure>
+</div>
 </details>
 
 
@@ -445,7 +455,7 @@ EVALUATE STEERING CODE:
 </div>
 <figure style="margin:16px 0; text-align:center;">
   <img src="/images/steering-unit-tests-passing.png" alt="All steering system unit tests passing" style="width:100%; border-radius:8px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">All 22 unit tests passing in 4.91 seconds</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">All steering system unit test functions passing in 4.91 seconds</figcaption>
 </figure>
 <pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
 #include &lt;gtest/gtest.h&gt;
