@@ -187,14 +187,14 @@ struct SteeringSystemData_s
         std::swap(_steeringParams.min_steering_signal_analog, _steeringParams.max_steering_signal_analog);
     }
     _steeringParams.span_signal_digital = _steeringParams.max_steering_signal_digital-_steeringParams.min_steering_signal_digital;
-    _steeringParams.analog_tol_deg = static_cast<float>(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
-    _steeringParams.digital_tol_deg = static_cast<float>(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
-    _steeringParams.digital_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
-    _steeringParams.analog_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
-    _steeringParams.analog_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
-    _steeringParams.analog_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
-    _steeringParams.digital_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
-    _steeringParams.digital_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
+    _steeringParams.analog_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
+    _steeringParams.digital_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
+    _steeringParams.digital_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
+    _steeringParams.analog_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
+    _steeringParams.analog_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
+    _steeringParams.analog_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
+    _steeringParams.digital_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
+    _steeringParams.digital_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
 
     if (max_observed_analog > min_observed_analog && _steeringParams.span_signal_analog > 2000) // prevents wrap around
     {
@@ -211,10 +211,10 @@ struct SteeringSystemData_s
 
 void SteeringSystem::update_observed_steering_limits(const uint32_t analog_raw, const uint32_t digital_raw) {
 
-    min_observed_analog = std::min(min_observed_analog, static_cast<uint32_t>(analog_raw));
-    max_observed_analog = std::max(max_observed_analog, static_cast<uint32_t>(analog_raw));
-    min_observed_digital = std::min(min_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT should both be uint32_t
-    max_observed_digital = std::max(max_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT ^
+    min_observed_analog = std::min(min_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
+    max_observed_analog = std::max(max_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
+    min_observed_digital = std::min(min_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT should both be uint32_t
+    max_observed_digital = std::max(max_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT ^
     if (min_observed_analog < 5)
     {
         min_observed_analog = UINT32_MAX; // clipping if it is at 0, it is likely sensor is clipping or clipped in past and reading is holding the 0 value. 
@@ -313,9 +313,9 @@ EVALUATE STEERING CODE:
             float dtheta_analog = filtered_analog_angle - _prev_analog_vel_angle;
             float dtheta_digital = _steeringSystemData.digital_steering_angle - _prev_digital_vel_angle;
 
-            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast<float>(dt)) * 1000.0f;
+            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast&lt;float&gt;(dt)) * 1000.0f;
 
-            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast<float>(dt)) * 1000.0f;
+            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast&lt;float&gt;(dt)) * 1000.0f;
 
             _last_filtered_analog_angle = filtered_analog_angle;
         } else {
@@ -378,9 +378,9 @@ EVALUATE STEERING CODE:
             float dtheta_analog = filtered_analog_angle - _prev_analog_vel_angle;
             float dtheta_digital = _steeringSystemData.digital_steering_angle - _prev_digital_vel_angle;
 
-            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast<float>(dt)) * 1000.0f;
+            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast&lt;float&gt;(dt)) * 1000.0f;
 
-            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast<float>(dt)) * 1000.0f;
+            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast&lt;float&gt;(dt)) * 1000.0f;
 
             _last_filtered_analog_angle = filtered_analog_angle;
         } else {
@@ -393,8 +393,8 @@ EVALUATE STEERING CODE:
         _steeringSystemData.dtheta_exceeded_digital = _evaluate_steering_dtheta_exceeded(_steeringSystemData.digital_steering_velocity_deg_s); // use digital velocity for dtheta check since it's more precise and we are concerned about large changes in angle that could be caused by noise in the analog sensor
 
         //Check if either sensor is out of range (pass in raw)
-        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast<uint32_t>(analog_raw));
-        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast<uint32_t>(digital_raw));
+        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast&lt;uint32_t&gt;(analog_raw));
+        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast&lt;uint32_t&gt;(digital_raw));
 
         //Check if there is too much of a difference between sensor values
         float sensor_difference = std::fabs(_steeringSystemData.analog_steering_angle - _steeringSystemData.digital_steering_angle);
@@ -443,6 +443,10 @@ EVALUATE STEERING CODE:
 <div class="code-description">
   <strong>Approach:</strong> Unit tests are our first line of verification before any hardware is involved. We used Google Test on PlatformIO with a hand-coded parameter struct that stands in for real calibration data. Each test targets a specific function and asserts an expected outcome: <code>true</code>, <code>false</code>, <code>EXPECT_EQ</code>, or <code>EXPECT_NEAR</code> within a thousandth of a degree to catch floating-point drift. The tests not shown here follow the same pattern: feed a modified input into the steering system and confirm the output changes as expected. This does not show all of the unit tests, but does give an idea for the approach. 
 </div>
+<figure style="margin:16px 0; text-align:center;">
+  <img src="/images/steering-unit-tests-passing.png" alt="All steering system unit tests passing" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">All 22 unit tests passing in 4.91 seconds</figcaption>
+</figure>
 <pre><code class="language-cpp">#define STEERING_SYSTEM_TEST
 #include &lt;gtest/gtest.h&gt;
 #include &lt;string&gt;
@@ -616,10 +620,6 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 }
 }
 </code></pre>
-<figure style="margin:16px 0; text-align:center;">
-  <img src="/images/steering-unit-tests-passing.png" alt="All steering system unit tests passing" style="width:100%; border-radius:8px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">All 22 unit tests passing in 4.91 seconds</figcaption>
-</figure>
 </details>
 
 </div>
