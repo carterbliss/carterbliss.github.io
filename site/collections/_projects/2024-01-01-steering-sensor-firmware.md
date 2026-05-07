@@ -1141,12 +1141,6 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
   border-bottom: 1px solid #21262d;
   margin-bottom: 14px;
 }
-.pcan-group-subtitle {
-  font-size: 12px;
-  font-weight: 400;
-  color: #8b949e;
-  margin-left: 8px;
-}
 .pcan-row { display: flex; gap: 14px; padding: 0 20px 14px; flex-wrap: wrap; }
 .pcan-row figure { margin: 0; flex: 1; min-width: 260px; text-align: center; }
 .pcan-row figure.full { flex: 0 0 100%; }
@@ -1155,71 +1149,71 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 </style>
 
 <div class="pcan-group">
-  <div class="pcan-group-title">STEERING_DATA <span class="pcan-group-subtitle">CAN ID: 0x41F · 7 bytes · VCF → broadcast</span></div>
+  <div class="pcan-group-title">STEERING_DATA</div>
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-steering-data-symbol.png" alt="STEERING_DATA symbol properties">
-      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-steering-data-signals.png" alt="STEERING_DATA signal definitions">
-      <figcaption>Signal definitions: bit position, length, and type for each field</figcaption>
+      <figcaption>Signal definitions</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-steering-data-layout.png" alt="STEERING_DATA bit layout">
-      <figcaption>Bit layout: 10 signals packed across 7 bytes</figcaption>
+      <figcaption>Bit layout</figcaption>
     </figure>
   </div>
 </div>
 
 <div class="pcan-group">
-  <div class="pcan-group-title">DASHBOARD_BUZZER_CONTROL <span class="pcan-group-subtitle">CAN ID: 0x7F1 · 2 bytes · VCF → VCR</span></div>
+  <div class="pcan-group-title">DASHBOARD_BUZZER_CONTROL</div>
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-dashboard-buzzer-symbol.png" alt="DASHBOARD_BUZZER_CONTROL symbol properties">
-      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-dashboard-buzzer-signals.png" alt="DASHBOARD_BUZZER_CONTROL signal definitions">
-      <figcaption>Signal definitions: calibration state flags and buzzer control</figcaption>
+      <figcaption>Signal definitions</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-dashboard-buzzer-layout.png" alt="DASHBOARD_BUZZER_CONTROL bit layout">
-      <figcaption>Bit layout: 4 signals packed into 2 bytes</figcaption>
+      <figcaption>Bit layout</figcaption>
     </figure>
   </div>
 </div>
 
 <div class="pcan-group">
-  <div class="pcan-group-title">DASH_INPUT <span class="pcan-group-subtitle">CAN ID: 0x300 · 3 bytes · Dashboard → VCF</span></div>
+  <div class="pcan-group-title">DASH_INPUT</div>
   <div class="pcan-row">
     <figure>
       <img src="/images/pcan-dash-input-symbol.png" alt="DASH_INPUT symbol properties">
-      <figcaption>Symbol properties: CAN ID, data length, direction</figcaption>
+      <figcaption>Symbol properties</figcaption>
     </figure>
     <figure>
       <img src="/images/pcan-dash-input-signals.png" alt="DASH_INPUT signal definitions">
-      <figcaption>Signal definitions: all dashboard button states and dial mode</figcaption>
+      <figcaption>Signal definitions</figcaption>
     </figure>
   </div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-dash-input-layout.png" alt="DASH_INPUT bit layout">
-      <figcaption>Bit layout: 10 button and dial signals packed into 3 bytes</figcaption>
+      <figcaption>Bit layout</figcaption>
     </figure>
   </div>
 </div>
 
 <div class="pcan-group">
-  <div class="pcan-group-title">vehicle_stateE <span class="pcan-group-subtitle">Enum: vehicle state machine values</span></div>
+  <div class="pcan-group-title">vehicle_stateE</div>
   <div class="pcan-row">
     <figure class="full">
       <img src="/images/pcan-vehicle-state-enum.png" alt="vehicle_stateE enum definition">
-      <figcaption>Enum definition: values 0–7 mapping to vehicle states, including the two steering recalibration states used by the VCR state machine</figcaption>
+      <figcaption>Enum definition</figcaption>
     </figure>
   </div>
 </div>
