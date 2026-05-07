@@ -279,6 +279,16 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <div class="code-description">
   <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function, we compare steering angle velocity with a hardcoded constant. To derive the steering angle velocity, we must dig deeper into the telemetry of each VCF functions frequency. Evaluate steering runs in async tasks, meaning it runs at 10 kHz. Our physical sensor outputs values at 4 kHz. When running this function at async level for the analog sensor, we noticed significant noise in our readings on fox glove, leading us to code our steering speed evaluation to 500 Hz and implementing a 2nd order buttworth IIR filter on our angle readings. This heavily decreased the fluctuation between values per given time from the analog sensor, and allowed our steering velocity values to maintain a smooth path.
 </div>
+<div style="display:flex; gap:14px; margin:16px 0; flex-wrap:wrap;">
+  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
+    <img src="/images/steering-velocity-raw.png" alt="Steering velocity raw — finite diff, heavy noise" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Raw velocity via finite difference — ±1000+ deg/s noise at full rate</figcaption>
+  </figure>
+  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
+    <img src="/images/steering-velocity-filtered.png" alt="Steering velocity after Butterworth filter — smooth" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Velocity from Butterworth-filtered angle — smooth and usable at 500 Hz</figcaption>
+  </figure>
+</div>
 <pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_dtheta_exceeded(float steering_velocity_deg_s) {
     return (fabs(steering_velocity_deg_s) > _steeringParams.max_dtheta_threshold);
 }
@@ -335,16 +345,6 @@ EVALUATE STEERING CODE:
 
 
 </code></pre>
-<div style="display:flex; gap:14px; margin:16px 0; flex-wrap:wrap;">
-  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
-    <img src="/images/steering-velocity-raw.png" alt="Steering velocity raw — finite diff, heavy noise" style="width:100%; border-radius:8px; border:1px solid #30363d;">
-    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Raw velocity via finite difference — ±1000+ deg/s noise at full rate</figcaption>
-  </figure>
-  <figure style="flex:1; min-width:260px; margin:0; text-align:center;">
-    <img src="/images/steering-velocity-filtered.png" alt="Steering velocity after Butterworth filter — smooth" style="width:100%; border-radius:8px; border:1px solid #30363d;">
-    <figcaption style="font-size:13px; color:#8b949e; margin-top:6px;">Velocity from Butterworth-filtered angle — smooth and usable at 500 Hz</figcaption>
-  </figure>
-</div>
 </details>
 
 
