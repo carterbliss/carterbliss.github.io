@@ -12,7 +12,7 @@ For HyTech's 2026 FSAE Vehicle: HTX, the electrical subteam needed a steering se
 
 ## Technical Details
 
-The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an Orbis digital sensor and a Phoenix America analog sensor. Microcontroller intakes analog to digital conversion value from analog sensor and raw reading from digital digital, then runs our steering system to conduct necessary functions. 
+The firmware was written in C++ targeting an teensy 4.1 microcontroller, which also interfaces with an Orbis digital sensor and a Phoenix America analog sensor. Microcontroller intakes analog to digital conversion value from analog sensor and raw reading from the digital sensor, then runs our steering system to conduct necessary functions. 
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -105,7 +105,7 @@ The firmware was written in C++ targeting an teensy 4.1 microcontroller, which a
 <summary>Initialize Variables</summary>
 <div class="code-description">
   
-  <strong>Approach:</strong> To run plausibility, range, and calibration functions, we need to establish two structures that will be used throughout the system. Our first struct is steering parameters, which essentially sets all relevant extremities and important data points, such as the midpoint analog to digital conversion(adc) value. Our system data struct is used for real time sensor value input. These are the raw adc values we take from our steering sensor to input into our system's functions. 
+  <strong>Approach:</strong> To run plausibility, range, and calibration functions, we need to establish two structures that will be used throughout the system. Our first struct is steering parameters, which essentially sets all relevant extremities and important data points, such as the midpoint analog to digital conversion (ADC) value. Our system data struct is used for real-time sensor value input. These are the raw ADC values we take from our steering sensor to input into our system's functions. 
 </div>
 <pre><code class="language-cpp">struct SteeringParams_s {
     // raw ADC input signals
@@ -164,8 +164,6 @@ struct SteeringSystemData_s
     bool dtheta_exceeded_analog;
     bool dtheta_exceeded_digital;
     bool both_sensors_fail;
-    bool analog_clipped;
-    bool digital_clipped;
 };</code></pre>
 </details>
 
@@ -174,26 +172,9 @@ struct SteeringSystemData_s
 <summary>Recalibrate</summary>
 <div class="code-description">
 
-  <strong>Approach:</strong> For our steering system, we recalibrate the digital and anlog sensor to account for physical sensor altercations (rattling, shifting, etc). Our system constantly reads observed relative extremeties through asnyc tasks, then once recalibration is trigged we write the new values to our steering params. We also run checks to observe if a min/max is at the physical sensor max: indicating a sensor clip. When the sensor clips it indicates a full rotation and value reset, but our system would then cling to this min/max as it misinterprets the actual steering angle min/max. We also check if the span is marginally greater than the possible steering angle span allows, in which case the sensor has moved and is clinging to improbable adc/raw values. After our minimum and maximum is set, we then calculate the rest of the correlating parameters for the steering system.
+  <strong>Approach:</strong> For our steering system, we recalibrate the digital and analog sensor to account for physical sensor alterations (rattling, shifting, etc). Our system constantly reads observed relative extremes through async tasks, then once recalibration is trigged we write the new values to our steering params. We also run checks to observe if a min/max is at the physical sensor max: indicating a sensor clip. When the sensor clips it indicates a full rotation and value reset (min = 0, max = sensor max). Additionally, this debugs any analog sensor bootup issues, as the sensor always turns on at 0V, producing a 0 adc at the start of every run. We also check if the span is marginally greater than the possible steering angle span allows, in which case the sensor has moved and is clinging to improbable adc/raw values. After our minimum and maximum is set, we then calculate the rest of the correlating parameters for the steering system. 
 </div>
 <pre><code class="language-cpp">void SteeringSystem::recalibrate_steering_digital() {
-    if (min_observed_analog == 0)
-    {
-        min_observed_analog = UINT32_MAX; // clipping if it is at 0, it is likely sensor is clipping or clipped in past and reading is holding the 0 value. 
-    }
-    if (max_observed_analog > 3685) 
-    {
-        max_observed_analog = 0; // clipping
-    }
-    if (min_observed_digital == 0)
-    {
-        min_observed_digital = UINT32_MAX; // clipping on prior run. 
-    }
-    if (max_observed_digital == 16384) 
-    {
-        max_observed_digital = 0; // clipping
-    }
-
     _steeringParams.min_steering_signal_analog = min_observed_analog;
     _steeringParams.max_steering_signal_analog = max_observed_analog;
     _steeringParams.min_steering_signal_digital = min_observed_digital;
@@ -206,33 +187,53 @@ struct SteeringSystemData_s
         std::swap(_steeringParams.min_steering_signal_analog, _steeringParams.max_steering_signal_analog);
     }
     _steeringParams.span_signal_digital = _steeringParams.max_steering_signal_digital-_steeringParams.min_steering_signal_digital;
-    _steeringParams.analog_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
-    _steeringParams.digital_tol_deg = static_cast&lt;float&gt;(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
-    _steeringParams.digital_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
-    _steeringParams.analog_midpoint = static_cast&lt;int32_t&gt;((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
-    _steeringParams.analog_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
-    _steeringParams.analog_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
-    _steeringParams.digital_min_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
-    _steeringParams.digital_max_with_margins = static_cast&lt;int32_t&gt;(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
+    _steeringParams.analog_tol_deg = static_cast<float>(_steeringParams.span_signal_analog) * _steeringParams.analog_tolerance * _steeringParams.deg_per_count_analog;
+    _steeringParams.digital_tol_deg = static_cast<float>(_steeringParams.span_signal_digital) *_steeringParams.digital_tolerance * _steeringParams.deg_per_count_digital;
+    _steeringParams.digital_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_digital + _steeringParams.min_steering_signal_digital) / 2); //NOLINT
+    _steeringParams.analog_midpoint = static_cast<int32_t>((_steeringParams.max_steering_signal_analog + _steeringParams.min_steering_signal_analog) / 2); //NOLINT
+    _steeringParams.analog_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_analog) - _steeringParams.analog_tol_deg;
+    _steeringParams.analog_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_analog) + _steeringParams.analog_tol_deg;
+    _steeringParams.digital_min_with_margins = static_cast<int32_t>(_steeringParams.min_steering_signal_digital) - _steeringParams.digital_tol_deg;
+    _steeringParams.digital_max_with_margins = static_cast<int32_t>(_steeringParams.max_steering_signal_digital) + _steeringParams.digital_tol_deg;
 
-    if ( _steeringParams.span_signal_analog > 2000)
+    if (max_observed_analog > min_observed_analog && _steeringParams.span_signal_analog > 2000) // prevents wrap around
     {
         min_observed_analog = UINT32_MAX; // after calculating params, if the range is marginally greater than half the steering wheel adc, likely the min and max are clinging to a prior run that is not applicable, meaning we will need to reset the boundaries. 
         max_observed_analog = 0;
     }
-    if (_steeringParams.span_signal_digital > 9000)
+    if (max_observed_digital > min_observed_digital && _steeringParams.span_signal_digital > 9000)
     {
         min_observed_digital = UINT32_MAX; 
         max_observed_digital = 0;
     }
+
 }
 
 void SteeringSystem::update_observed_steering_limits(const uint32_t analog_raw, const uint32_t digital_raw) {
-    min_observed_analog = std::min(min_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
-    max_observed_analog = std::max(max_observed_analog, static_cast&lt;uint32_t&gt;(analog_raw));
-    min_observed_digital = std::min(min_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT should both be uint32_t
-    max_observed_digital = std::max(max_observed_digital, static_cast&lt;uint32_t&gt;(digital_raw)); //NOLINT ^
+
+    min_observed_analog = std::min(min_observed_analog, static_cast<uint32_t>(analog_raw));
+    max_observed_analog = std::max(max_observed_analog, static_cast<uint32_t>(analog_raw));
+    min_observed_digital = std::min(min_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT should both be uint32_t
+    max_observed_digital = std::max(max_observed_digital, static_cast<uint32_t>(digital_raw)); //NOLINT ^
+    if (min_observed_analog < 5)
+    {
+        min_observed_analog = UINT32_MAX; // clipping if it is at 0, it is likely sensor is clipping or clipped in past and reading is holding the 0 value. 
+    }
+    if (max_observed_analog > 3685) 
+    {
+        max_observed_analog = 0; // clipping
+    }
+    if (min_observed_digital < 5)
+    {
+        min_observed_digital = UINT32_MAX; // clipping on prior run. 
+    }
+    if (max_observed_digital > 16384) 
+    {
+        max_observed_digital = 0; // clipping
+    }
 }
+
+
 </code></pre>
 </details>
 
@@ -240,7 +241,7 @@ void SteeringSystem::update_observed_steering_limits(const uint32_t analog_raw, 
 <details>
 <summary>Converting Values</summary>
 <div class="code-description">
-  <strong>Approach:</strong> To convert from adc/raw to a steering angle between -90 and 90, we simply subtract the midpoint adc value from whatever raw value we currently read, then multiply it by the degrees per count of adc (which is determined in recalibrate steering). Digital reads positively when moving right to left, so for consistency the conversion for digital sensor is flipped. 
+  <strong>Approach:</strong> To convert from adc/raw to a steering angle between -90 and 90, we subtract the midpoint adc value from whatever raw value we currently read, then multiply it by the degrees per count of adc (which is determined in recalibrate steering). Digital reads positively when moving right to left, so for consistency the conversion for digital sensor is flipped. 
 </div>
 <pre><code class="language-cpp">float SteeringSystem::_convert_digital_sensor(const uint32_t digital_raw) {
     // Same logic for digital
@@ -276,11 +277,63 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
 <details>
 <summary>Evaluating Steering Speed</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function we check whether or not the change in angle is greater than the value in steering parameters. This hard-coded value is set in VCF constants. You may have noticed it was not set in the recalibrate function, the VCF constant values are established in the VCF setup interfaces function in VCF tasks. 
+  <strong>Approach:</strong> Evaluating if the steering angle changed too quickly is another means of possible sensor error. For this function, we compare steering angle velocity with a hardcoded constant. To derive the steering angle velocity, we must dig deeper into the telemetry of each VCF functions frequency. Evaluate steering runs in async tasks, meaning it runs at 10 kHz. Our physical sensor outputs values at 4 kHz. When running this function at async level for the analog sensor, we noticed significant noise in our readings on fox glove, leading us to code our steering speed evaluation to 500 Hz and implementing a 2nd order buttworth IIR filter on our angle readings. This heavily decreased the fluctuation between values per given time from the analog sensor, and allowed our steering velocity values to maintain a smooth path.
 </div>
-<pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_dtheta_exceeded(float dtheta){
-    return (fabs(dtheta) &gt; _steeringParams.max_dtheta_threshold);
+<pre><code class="language-cpp">bool SteeringSystem::_evaluate_steering_dtheta_exceeded(float steering_velocity_deg_s) {
+    return (fabs(steering_velocity_deg_s) > _steeringParams.max_dtheta_threshold);
 }
+
+float SteeringSystem::_filter_analog_angle(float x) {
+    // First sample: pre-load the state so the output starts at x and
+    // there is no startup transient (otherwise the filter would ramp
+    // from 0 up to the first real value over ~50 ms).
+    if (!_bw_initialized) {
+        _bw_z1 = (1.0f - kBwB0) * x;
+        _bw_z2 = (kBwB2 - kBwA2) * x;
+        _bw_initialized = true;
+    }
+    // Direct Form II Transposed biquad: 5 multiplies, 4 adds, 2 floats of state.
+    float y = kBwB0 * x + _bw_z1;
+    _bw_z1 = kBwB1 * x - kBwA1 * y + _bw_z2;
+    _bw_z2 = kBwB2 * x - kBwA2 * y;
+    return y;
+}
+EVALUATE STEERING CODE: 
+    uint32_t dt = 0;
+    if (current_millis - _prev_timestamp > 2) {
+        dt = current_millis - _prev_timestamp; //current_millis is seperate data input  
+    }
+
+    if (!_first_run) { //check that we not on the first run which would mean no previous data
+        
+ 
+        if (dt >= 2) {
+            float filtered_analog_angle = _filter_analog_angle(_convert_analog_sensor(analog_raw));
+            _steeringSystemData.analog_steering_angle = filtered_analog_angle; // update the angle to the filtered value for downstream use and velocity calculation
+            float dtheta_analog = filtered_analog_angle - _prev_analog_vel_angle;
+            float dtheta_digital = _steeringSystemData.digital_steering_angle - _prev_digital_vel_angle;
+
+            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast<float>(dt)) * 1000.0f;
+
+            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast<float>(dt)) * 1000.0f;
+
+            _last_filtered_analog_angle = filtered_analog_angle;
+        } else {
+            _steeringSystemData.analog_steering_angle = _last_filtered_analog_angle;
+        }
+    //Update states
+    if (dt >= 2) { // update at 500Hz
+        _prev_timestamp = current_millis;
+        _prev_analog_vel_angle = _steeringSystemData.analog_steering_angle;
+        _prev_digital_vel_angle = _steeringSystemData.digital_steering_angle;
+    }
+
+    _prev_analog_angle = _steeringSystemData.analog_steering_angle;
+    _prev_digital_angle = _steeringSystemData.digital_steering_angle;
+    _first_run = false;
+}
+
+
 </code></pre>
 </details>
 
@@ -298,8 +351,6 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
     _steeringSystemData.dtheta_exceeded_analog = false;
     _steeringSystemData.dtheta_exceeded_digital = false;
     _steeringSystemData.both_sensors_fail = false;
-    _steeringSystemData.analog_clipped = (min_observed_analog == 0 || max_observed_analog > 3685); // assuming 12-bit ADC with 10% dropoff
-    _steeringSystemData.digital_clipped = (min_observed_digital == 0 || max_observed_digital > 16380); // assuming 14-bit ADC with minimal dropoff
 
     const uint32_t digital_raw = digital_data.rawValue;
 
@@ -311,32 +362,39 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
     _steeringSystemData.analog_raw = analog_raw;
 
     //Conversion from raw ADC to degrees
-    _steeringSystemData.analog_steering_angle = _convert_analog_sensor(analog_raw);
     _steeringSystemData.digital_steering_angle = _convert_digital_sensor(digital_raw);
-    
-    uint32_t dt = current_millis - _prev_timestamp; //current_millis is seperate data input  
 
-    if (!_first_run && dt > 0) { //check that we not on the first run which would mean no previous data
-        float dtheta_analog = _steeringSystemData.analog_steering_angle - _prev_analog_angle; //prev_angle established in last run
-        if (dtheta_analog < 2)//make constant in VCF constants 
-        {
-            _steeringSystemData.analog_steering_velocity_deg_s = 0; //NOLINT ms to s
-        }
-        else
-        {
-            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / dt) * 1000.0f; //NOLINT ms to s
-        }
+    uint32_t dt = 0;
+    if (current_millis - _prev_timestamp > 2) {
+        dt = current_millis - _prev_timestamp; //current_millis is seperate data input  
+    }
+
+    if (!_first_run) { //check that we not on the first run which would mean no previous data
         
-        float dtheta_digital = _steeringSystemData.digital_steering_angle - _prev_digital_angle;
-        _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / dt) * 1000.0f; //NOLINT ms to s
+ 
+        if (dt >= 2) {
+            float filtered_analog_angle = _filter_analog_angle(_convert_analog_sensor(analog_raw));
+            _steeringSystemData.analog_steering_angle = filtered_analog_angle; // update the angle to the filtered value for downstream use and velocity calculation
+            float dtheta_analog = filtered_analog_angle - _prev_analog_vel_angle;
+            float dtheta_digital = _steeringSystemData.digital_steering_angle - _prev_digital_vel_angle;
+
+            _steeringSystemData.analog_steering_velocity_deg_s = (dtheta_analog / static_cast<float>(dt)) * 1000.0f;
+
+            _steeringSystemData.digital_steering_velocity_deg_s = (dtheta_digital / static_cast<float>(dt)) * 1000.0f;
+
+            _last_filtered_analog_angle = filtered_analog_angle;
+        } else {
+            _steeringSystemData.analog_steering_angle = _last_filtered_analog_angle;
+        }
+
 
         //Check if either sensor moved too much in one tick
         _steeringSystemData.dtheta_exceeded_analog = _evaluate_steering_dtheta_exceeded(_steeringSystemData.analog_steering_velocity_deg_s);
         _steeringSystemData.dtheta_exceeded_digital = _evaluate_steering_dtheta_exceeded(_steeringSystemData.digital_steering_velocity_deg_s); // use digital velocity for dtheta check since it's more precise and we are concerned about large changes in angle that could be caused by noise in the analog sensor
 
         //Check if either sensor is out of range (pass in raw)
-        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast&lt;uint32_t&gt;(analog_raw));
-        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast&lt;uint32_t&gt;(digital_raw)) || digital_fault;
+        _steeringSystemData.analog_oor_implausibility = _evaluate_steering_oor_analog(static_cast<uint32_t>(analog_raw));
+        _steeringSystemData.digital_oor_implausibility = _evaluate_steering_oor_digital(static_cast<uint32_t>(digital_raw));
 
         //Check if there is too much of a difference between sensor values
         float sensor_difference = std::fabs(_steeringSystemData.analog_steering_angle - _steeringSystemData.digital_steering_angle);
@@ -346,7 +404,7 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
         //create an algorithm/ checklist to determine which sensor we trust more,
         //or, if we should have an algorithm to have a weighted calculation based on both values
         bool analog_valid = !_steeringSystemData.analog_oor_implausibility && !_steeringSystemData.dtheta_exceeded_analog;
-        bool digital_valid = !_steeringSystemData.digital_oor_implausibility && !_steeringSystemData.dtheta_exceeded_digital && !digital_fault;
+        bool digital_valid = !_steeringSystemData.digital_oor_implausibility && !_steeringSystemData.dtheta_exceeded_digital && !_steeringSystemData.interface_sensor_error;
 
         if (analog_valid && digital_valid) {
             //if sensors have acceptable difference, use digital as steering angle
@@ -365,9 +423,14 @@ bool SteeringSystem::_evaluate_steering_oor_digital(const uint32_t steering_digi
         }
     }
     //Update states
+    if (dt >= 2) { // update at 500Hz
+        _prev_timestamp = current_millis;
+        _prev_analog_vel_angle = _steeringSystemData.analog_steering_angle;
+        _prev_digital_vel_angle = _steeringSystemData.digital_steering_angle;
+    }
+
     _prev_analog_angle = _steeringSystemData.analog_steering_angle;
     _prev_digital_angle = _steeringSystemData.digital_steering_angle;
-    _prev_timestamp = current_millis;
     _first_run = false;
 }
 
@@ -553,6 +616,10 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 }
 }
 </code></pre>
+<figure style="margin:16px 0; text-align:center;">
+  <img src="/images/steering-unit-tests-passing.png" alt="All steering system unit tests passing" style="width:100%; border-radius:8px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">All 22 unit tests passing in 4.91 seconds</figcaption>
+</figure>
 </details>
 
 </div>
@@ -621,7 +688,7 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>Async Main Task</summary>
 <div class="code-description">
-  <strong>Approach:</strong> This task runs as fast as the scheduler allows and is responsible for keeping sensor data fresh. On each tick it samples the Orbis digital encoder, reads the analog ADC channel, then calls <code>evaluate_steering</code> with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
+  <strong>Approach:</strong> This task runs as fast as the scheduler allows (10 kHz) and is responsible for keeping sensor data fresh. On each tick it samples the Orbis digital encoder, reads the analog ADC channel, then calls evaluate_steering with both raw values so the steering system can compute the latest plausibility-checked output angle. Pedal evaluation is also triggered here since it shares the same high-frequency update requirement.
 </div>
 <pre><code class="language-cpp">namespace async_tasks
 {
@@ -662,44 +729,29 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <details>
 <summary>Update Steering Calibration Task</summary>
 <div class="code-description">
-  <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires, it calls <code>recalibrate_steering_digital</code> and then writes every updated limit to EEPROM..
+  <strong>Approach:</strong> This scheduled task continuously tracks the observed steering extremes so a calibration can be committed at any moment. When the calibration trigger fires, it calls recalibrate_steering_digital and then writes every updated limit to EEPROM.Additionally, this reads a CAN message that can be received more than once, so we added a timing check to ensure only one calibration is triggered at a time.  
 </div>
-<pre><code class="language-cpp">HT_TASK::TaskResponse update_steering_calibration_task(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+<pre><code class="language-cpp">uint32_t last_steering_calibrate_time; // move this maybe
+HT_TASK::TaskResponse update_steering_calibration_task(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     const uint32_t analog_raw = SteeringSystemInstance::instance().get_steering_system_data().analog_raw;
     const uint32_t digital_raw = SteeringSystemInstance::instance().get_steering_system_data().digital_raw;
 
     SteeringSystemInstance::instance().update_observed_steering_limits(analog_raw, digital_raw);
-    if (false /* TODO: IMPORTANT ADD SOMETHING FOR TRIGGERING CALIBRATION*/) {
-        SteeringSystemInstance::instance().recalibrate_steering_digital(analog_raw, digital_raw, false /* TODO: calibration trigger or something*/);
+
+
+     if (VCRInterfaceInstance::instance().is_in_steering_calibration_state() && sys_time::hal_millis() - last_steering_calibrate_time > 5000) {
+        last_steering_calibrate_time = sys_time::hal_millis();
+
+        SteeringSystemInstance::instance().recalibrate_steering_digital();
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MIN_STEERING_SIGNAL_ANALOG_ADDR, SteeringSystemInstance::instance().get_steering_params().min_steering_signal_analog);
+        EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MAX_STEERING_SIGNAL_ANALOG_ADDR, SteeringSystemInstance::instance().get_steering_params().max_steering_signal_analog);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MIN_STEERING_SIGNAL_DIGITAL_ADDR, SteeringSystemInstance::instance().get_steering_params().min_steering_signal_digital);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::MAX_STEERING_SIGNAL_DIGITAL_ADDR, SteeringSystemInstance::instance().get_steering_params().max_steering_signal_digital);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::ANALOG_MIN_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().analog_min_with_margins);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::ANALOG_MAX_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().analog_max_with_margins);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::DIGITAL_MIN_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().digital_min_with_margins);
         EEPROMUtilities::write_eeprom_32bit(VCFSystemConstants::DIGITAL_MAX_WITH_MARGINS_ADDR, SteeringSystemInstance::instance().get_steering_params().digital_max_with_margins);
-    }
 
-    return HT_TASK::TaskResponse::YIELD;
-}
-</code></pre>
-</details>
-
-
-<details>
-<summary>Enqueue Steering Data</summary>
-<div class="code-description">
-  <strong>Approach:</strong> Once the steering system has validated its output angle, this task packages it into a CAN message and pushes it onto the transmit ring buffer. By separating the enqueue step from the evaluation step, the two can run at different rates: evaluation runs as fast as possible in the async task, while this task fires on a fixed CAN broadcast interval to avoid flooding the bus.
-</div>
-<pre><code class="language-cpp">HT_TASK::TaskResponse enqueue_steering_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
-{
-    STEERING_DATA_t msg_out;
-    SteeringSystemData_s steering_system_data = SteeringSystemInstance::instance().get_steering_system_data();
-    /* TODO: Change steering_*_raw to new values we have to add to CAN library. Also add other msg_out variables for implausibilities*/
-    msg_out.steering_analog_raw = steering_system_data.analog_steering_angle;
-    msg_out.steering_digital_raw = steering_system_data.digital_steering_angle; //NOLINT
-
-    CAN_util::enqueue_msg(&msg_out, &Pack_STEERING_DATA_hytech, VCFCANInterfaceImpl::VCFCANInterfaceObjectsInstance::instance().main_can_tx_buffer);
-    return HT_TASK::TaskResponse::YIELD;
 }
 </code></pre>
 </details>
@@ -710,7 +762,8 @@ TEST(SteeringSystemTesting, test_sensor_output_logic){
 <div class="code-description">
   <strong>Approach:</strong> On the VCF firmware, we have a global project file designated for setting addresses that will be referenced in VCF_Tasks. To ensure every variable is available when the system runs, we define all corresponding constants in our VCF_constants file. The steering system variables are assigned as EEPROM addresses, so the values themselves are not the actual physical values they represent: they are just memory locations. In the VCFTaskConstants namespace, the variables define the sample rate of each component, determining how many times per second each task runs.
 </div>
-<pre><code class="language-cpp">constexpr int BTN_PRESET_READ = 28; // recal button (brightness control on schematic)
+<pre><code class="language-cpp">    constexpr int STEERING_1_CHANNEL        = 2;    // Analog steering sensor 1
+constexpr int BTN_PRESET_READ = 28; // recal button (brightness control on schematic)
 constexpr float STEERING_1_OFFSET = 0;
 
 namespace VCFSystemConstants {
@@ -727,15 +780,16 @@ namespace VCFSystemConstants {
     constexpr int32_t DIGITAL_MAX_WITH_MARGINS_ADDR = 52;
 
     // implausibility values
-    constexpr float ANALOG_TOL = 0.005f; //+- 0.5% error (analog sensor tolerance according to datasheet)
-    constexpr float DIGITAL_TOL_DEG = 0.2f; // +- 0.2 degrees error
+    constexpr float ANALOG_TOLERANCE = 0.05f; //+- 0.5% error (analog sensor tolerance according to datasheet)
+    constexpr float DIGITAL_TOLERANCE = 0.05f; // +- 0.2 degrees error
+    constexpr float ERROR_BETWEEN_SENSORS_TOLERANCE = 5.0f;
 
     // rate of angle change
-    constexpr float MAX_DTHETA_THRESHOLD = 5.0f; //maximum change in angle since last reading to consider the reading valid
+    constexpr float MAX_DTHETA_THRESHOLD = 50.0f; //maximum change in angle since last reading to consider the reading valid
 
     // degrees per bit
     constexpr float DEG_PER_COUNT_DIGITAL = 360.0f / 16384.0f;
-    constexpr float DEG_PER_COUNT_ANALOG = 360.0f / 4096.0f;
+    constexpr float DEG_PER_COUNT_ANALOG = 360.0f / 3686.4f;
 }
 
 namespace VCFTaskConstants {
@@ -1165,7 +1219,7 @@ void VCFInterface::enqueue_vehicle_state_message(VehicleState_e vehicle_state, D
 <details>
 <summary>Ethernet Messaging</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Unlike CAN, which sends each message type separately on its own ID, Ethernet bundles all system data into one large Protobuf message and transmits it in a single packet. On VCF, <code>make_vcf_data_msg</code> pulls every field from the steering system data struct and packs them into a <code>hytech_msgs_VCFData_s</code> message, which is then sent over UDP to drivebrain. VCF also receives a VCR data message over Ethernet to get shared state like buzzer status. The message schema itself lives in the HT-Proto repository and is defined in <code>.proto</code> files, which are compiled into C structs used on both ends.
+  <strong>Approach:</strong> Unlike CAN, which sends each message type separately on its own ID, Ethernet bundles all system data into one large Protobuf message and transmits it in a single packet. On VCF, make_vcf_data_msg pulls every field from the steering system data struct and packs them into a hytech_msgs_VCFData_s message, which is then sent over UDP to drivebrain. VCF also receives a VCR data message over Ethernet to get shared state like buzzer status. The message schema itself lives in the HT-Proto repository and is defined in .proto files, which are compiled into C structs used on both ends.
 </div>
 <pre><code class="language-cpp">// VCF Ethernet Interface — packing steering data into outbound Ethernet message
 hytech_msgs_VCFData_s VCFEthernetInterface::make_vcf_data_msg(ADCInterface &ADCInterfaceInstance, DashboardInterface &dashInstance, PedalsSystem &pedalsInstance, SteeringSystem &steeringInstance)
@@ -1184,8 +1238,6 @@ hytech_msgs_VCFData_s VCFEthernetInterface::make_vcf_data_msg(ADCInterface &ADCI
     out.steering_system_data.dtheta_exceeded_digital = steeringInstance.get_steering_system_data().dtheta_exceeded_digital;
     out.steering_system_data.both_sensors_fail = steeringInstance.get_steering_system_data().both_sensors_fail;
     out.steering_system_data.interface_sensor_error = steeringInstance.get_steering_system_data().interface_sensor_error;
-    out.steering_system_data.analog_clipped = steeringInstance.get_steering_system_data().analog_clipped;
-    out.steering_system_data.digital_clipped = steeringInstance.get_steering_system_data().digital_clipped;
 }
 
 // VCF receiving VCR data over Ethernet
@@ -1218,8 +1270,6 @@ message SteeringSystemData_s
     bool dtheta_exceeded_digital = 12;
     bool both_sensors_fail = 13;
     bool interface_sensor_error = 14;
-    bool analog_clipped = 15;
-    bool digital_clipped = 16;
 }
 
 message VCFData_s
