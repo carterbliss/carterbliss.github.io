@@ -2,7 +2,7 @@
 date: 2026-03-26
 title: Supercapacitor IC
 subtitle: Circuit Design – Power Electronics
-image: '/images/supercap-cover.png'
+image: '/images/supercap-pcb-layout.png'
 ---
 
 ## Overview
