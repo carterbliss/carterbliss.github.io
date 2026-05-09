@@ -7,7 +7,7 @@ image: '/images/hasp-balloon.jpg'
 
 ## Overview
 
-As a systems design member of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our circuit charges and discharges the supercapacitor at a constant 10µA current while reading voltage and current to calculate supercapacitor stability and resistance over time. Switching is handled by MOSFETs driven by a pulse wave monitor, comparators, and a microcontroller. In summer 2026, the fabricated IC will fly aboard a NASA balloon into the stratosphere( meaning every component must survive temperatures down to -60°C).
+As a systems design member of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization experiment system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our fabricated supercapacitors and experimental cards will take flight on a NASA balloon in Fall 2026 inside a payload through the High Altitude Student Platform. Our circuit targets Galvanostatic Charge Discharge cycling in order to determine supercapacitor capacitance stability and resistance over time. Because our experiment will take place in the stratosphere, we must meticulously select components rated down to -60°C. 
 
 ## Technical Details
 
@@ -66,40 +66,39 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <div class="code-accordion">
 
 <details>
-<summary>Discharge Circuit</summary>
+<summary>Constant Current Design</summary>
 <div class="code-description">
-  <strong>Approach:</strong> The discharge circuit is built around an op-amp feedback system that forces a constant 10µA from the supercapacitor regardless of how its voltage changes over time. The key insight is that a constant current discharge causes voltage to drop linearly, which is exactly the behavior needed to calculate capacitance from C = I × Δt / ΔV.
+  <strong>Approach:</strong> For charging, rather than building a custom feedback circuit, we use the <strong>LM134H</strong>: a dedicated 3-terminal constant current source chip. The chip is driven by <strong>5VA</strong> and delivers a fixed current directly into the supercapacitor. The output current is set entirely by a single external resistor: I = 67.7mV / R_SET. With <strong>R1 at 6.67kΩ</strong>, this gives I = 67.7mV / 6670Ω ≈ 10µA.
   <br><br>
-  The current is set by <strong>R1 (9kΩ)</strong>, the value here sets the discharge current. With a 0.1V reference (V5), the target voltage across R1 is 0.1V, giving I = 0.1V / 9kΩ ≈ 11µA ≈ 10µA. <strong>U3</strong> is an op-amp that compares this 0.1V reference against the actual voltage developing across R1 and drives the gate of <strong>Q1 (NMOS)</strong> to correct deviation: if current rises, Q1 is turned down; if it falls, Q1 is turned up. This feedback loop is what maintains the constant current and ultamitely linear voltage decreasing.
+  What makes this chip well-suited for the task is that it internally adjusts its output to compensate for whatever resistance the capacitor presents as its voltage rises during charging. It samples the voltage at its R+ terminal and uses internal feedback to maintain a constant current regardless of deviations in path resistance.
   <br><br>
-  <strong>Q2 (NMOS)</strong> acts as the high-side current sense element, isolating the sense path from the main discharge path through <strong>C1 (1.6µF)</strong>. <strong>U1</strong> provides a second comparator stage in the loop for additional stability. <strong>R6 and R7 (both 250kΩ)</strong> form the voltage divider which feeds into the op-amp, and <strong>R2 and R3 (both 4.7kΩ)</strong> set the op-amp feedback gain. <strong>V2 (3.3V)</strong> powers the control circuitry.
+  However, this behavior introduces a risk: once the capacitor is fully charged, the LM134H has no awareness of that state and will continue trying to source current, which can drive the capacitor voltage above its rated limit. To prevent this, the <strong>LM193</strong> comparator monitors the capacitor voltage against a 3V reference. If the capacitor voltage exceeds 3V, the comparator output floats, which is pulled up to 3.3V by a pull-up resistor, opening the gate of the PMOS in series with the charge path and cutting off current. Below 3V, the output is pulled low, keeping the PMOS conducting.
+  <br><br>
+  Since the LM134H relies on an external component model that KiCad's SPICE engine cannot simulate directly, running a transient analysis on the schematic produces no result. To validate the behavior, the LM134H is swapped out for an <strong>IDC</strong> set to output 10µA. This is purely a simulation stand-in and lets us confirm that a 10µA source will behave correctly with the rest of the circuit before committing to the real chip.
 </div>
-<img src="/images/supercap-circuit.png" alt="Discharge circuit schematic" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
-<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The transient simulation confirms the circuit behaves as designed. <strong style="color:#c9d1d9;">I(R1) holds at 9.99µA</strong> throughout each discharge phase, validating the feedback loop. The voltage (blue trace) decreases linearly during discharge — the expected signature of a constant-current load, and exactly what's needed to calculate capacitance. When the voltage jumps sharply back up, that represents the capacitor being fully charged again before the next discharge cycle begins. The green trace shows the control switching signal driving this charge/discharge cycling.</p>
+<img src="/images/supercap-cc-schematic.png" alt="LM134H constant current charging circuit" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
+<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The simulation confirms it: <strong style="color:#c9d1d9;">I(R1) holds flat at exactly 10µA</strong> across the entire run, showing that the IDC delivers perfectly constant current into the capacitor regardless of how the capacitor voltage changes over time.</p>
 <figure style="margin:8px 0 16px; text-align:center;">
-  <img src="/images/supercap-sim.png" alt="Transient simulation showing constant current discharge" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation — I(R1) = 9.99µA, linear voltage discharge with voltage jumping back on full charge</figcaption>
+  <img src="/images/supercap-idc-sim.png" alt="IDC constant current simulation" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation with IDC: I(R1) = 10µA flat, validating constant current through the capacitor</figcaption>
 </figure>
 </details>
 
 <details>
-<summary>Constant Current Design</summary>
+<summary>Discharge Circuit</summary>
 <div class="code-description">
-  <strong>Approach:</strong> For charging, rather than building a custom feedback circuit, we use the <strong>LM334Z</strong> — a dedicated 3-terminal constant current source chip. The chip is driven by <strong>V1 (3.3V)</strong> and delivers a fixed current directly into the supercapacitor <strong>C1 (1.15µF)</strong>. The output current is set entirely by a single external resistor: I = 67.7mV / R_SET. With <strong>R1 at 6.77kΩ</strong>, this gives exactly I = 67.7mV / 6770Ω = <strong>10µA</strong>.
+  <strong>Approach:</strong> The discharge circuit is built around an op-amp feedback system that forces a constant 10µA from the supercapacitor regardless of how its voltage changes over time. The key insight is that a constant current discharge causes voltage to drop linearly, which is exactly the behavior needed to calculate capacitance from C = I × Δt / ΔV.
   <br><br>
-  What makes this chip well-suited for the task is that it internally adjusts its impedance to compensate for whatever resistance the capacitor presents as its voltage rises during charging — keeping the current flat throughout the full charge cycle regardless of the changing load.
-  <br><br>
-  However, this behavior introduces a risk: once the capacitor is fully charged, the LM334Z has no awareness of that state and will continue trying to source current, which can drive the capacitor voltage above its rated limit. This is why the backup comparator described in the Switches section exists — it monitors the capacitor voltage and cuts off the charge path before any overvoltage can occur.
-
-  Since the LM334Z relies on an external component model that KiCad's SPICE engine cannot simulate directly, running a transient analysis on the schematic as-is produces no result. To validate the behavior, the LM334Z is swapped out for an <strong>IDC</strong> — an ideal current source symbol built into SPICE — set to output 10µA. This is purely a simulation stand-in: the IDC has no physical counterpart on the PCB, but it lets us confirm that a 10µA source will behave correctly with the rest of the circuit before committing to the real chip.
+  <strong>NMOS1</strong> connects directly to the microcontroller through a connector pin TX_MOSL_D1, which is coded as a pulse wave monitor that enables the discharge path when high. The current is set by <strong>R7 (9kΩ)</strong>. With a 0.1V reference, the target voltage across R7 is 0.1V, giving I = 0.1V / 9kΩ ≈ 11µA ≈ 10µA (with NMOS propagation delay). <strong>U3</strong> is an op-amp that compares this 0.1V reference against the actual voltage developing across R7 and drives the gate of <strong>NMOS2</strong> to correct any deviation: if current rises, NMOS2 is turned down; if it falls, NMOS2 is turned up. This feedback loop is what maintains constant current and ultimately produces a linear voltage decrease.
 </div>
-<img src="/images/supercap-cc.png" alt="LM334Z constant current charging circuit" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
-<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The simulation confirms it: <strong style="color:#c9d1d9;">I(R1) holds flat at exactly 10µA</strong> across the entire run, showing that the IDC — and by extension the LM334Z it represents — delivers perfectly constant current into the capacitor regardless of how the capacitor voltage changes over time.</p>
+<img src="/images/supercap-discharge-schematic.png" alt="Discharge circuit schematic" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
+<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The transient simulation confirms the circuit behaves as designed. Note: the simulation was run on an earlier version of the schematic — <strong style="color:#c9d1d9;">R1 in the simulation corresponds to R7 in the current schematic</strong>. <strong style="color:#c9d1d9;">I(R1) holds at 9.99µA</strong> throughout each discharge phase, validating the feedback loop. The voltage (blue trace) decreases linearly during discharge: the expected signature of a constant-current load, and exactly what's needed to measure stability and resistance. When the voltage jumps sharply back up, that represents the capacitor being fully charged again before the next discharge cycle begins. The green trace shows the control switching signal driving this charge/discharge cycling.</p>
 <figure style="margin:8px 0 16px; text-align:center;">
-  <img src="/images/supercap-idc-sim.png" alt="IDC constant current simulation" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation with IDC — I(R1) = 10µA flat, validating constant current through the capacitor</figcaption>
+  <img src="/images/supercap-sim.png" alt="Transient simulation showing constant current discharge" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation — I(R1) = 9.99µA (R1 = R7 in current schematic), linear voltage discharge</figcaption>
 </figure>
 </details>
+
 
 <details>
 <summary>Switches</summary>
