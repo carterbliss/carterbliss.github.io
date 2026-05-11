@@ -170,20 +170,30 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </figure>
 <figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-pcb-routed.png" alt="Routed PCB layout" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Routed PCB layout — HASP Experiment Board V1</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Routed PCB layout</figcaption>
 </figure>
 <figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-drc.png" alt="DRC showing 0 violations" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">DRC — 0 violations, 0 unconnected items</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">DRC 0 violationss</figcaption>
 </figure>
 </details>
 
 <details>
 <summary>Future Work</summary>
 <div class="code-description">
-  <strong>Approach:</strong> My current role has been integrating all subcircuits into a single schematic and walking other team members through the design decisions. Parts and footprints have been assigned to every symbol, and PCB routing has begun. We are waiting to receive components before soldering and assembling the full IC interface and connecting it to the microcontroller. This project will continue to be updated as progress is made throughout the semester.
+  <strong>Approach:</strong> My role has been designing and integrating all subcircuits into a single schematic and walking teammates through the design decisions. Experiment card V1 has been fabricated and is ready for component population and testing. With the semester ending, hardware assembly will be handled by team members remaining at Georgia Tech over the summer. In the meantime, I am shifting focus to STM32 firmware, primarily the PWM control logic for charge and discharge cycling. In July, the team will integrate the finalized boards and supercapacitor onto the HASP payload, which will take flight in August.
+  <br><br>
+  Since this project is run through Dr. Ready's lab at the Georgia Tech Research Institute, our team had the opportunity to present our research and findings to an audience of United States Space Force personnel, including Chief Master Sergeant John F. Bentivegna and other active-duty members. Presenting work that may one day be used in space applications to the people who operate in that domain was an experience unlike any other.
 </div>
 <figure style="margin:16px 0; text-align:center;">
+  <img src="/images/supercap-fabricated-board.jpg" alt="Fabricated experiment board V1" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Fabricated experiment card V1</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-vip-presentation.jpg" alt="VIP team presenting to US Space Force at GTRI" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">VIP team presenting to US Space Force personnel at Georgia Tech Research Institute</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-full-schematic.png" alt="Full IC schematic" style="width:100%; border-radius:6px; border:1px solid #30363d;">
   <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Current IC Schematic</figcaption>
 </figure>
@@ -193,4 +203,4 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 
 ## Outcome
 
-[Coming soon — results will be added following the NASA balloon flight in summer 2026.]
+[Results will be added following the NASA balloon flight in August 2026.]
