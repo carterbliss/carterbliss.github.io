@@ -66,7 +66,7 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <div class="code-accordion">
 
 <details>
-<summary>Constant Current Design</summary>
+<summary>Constant Current Charge</summary>
 <div class="code-description">
   <strong>Approach:</strong> The charging path is initially enabled by a pin coming from our microcontroller: <strong> RX_MISO_D0 </strong>. Which is a pulse wave monitor coded to alternate between high and low, (0 to 3.3V). We code the output to operate at a frequency that allows enough time for the supercapacitor to fully charge, which plugs into the PMOS2 in series with the path. Once the PWM outputs a low, the path is enabled. For charging, rather than building a custom feedback circuit, we use the <strong>LM134H</strong>: a dedicated constant current source chip. The chip is driven by <strong>5VA</strong> and delivers a fixed current directly into the supercapacitor. The output current is set entirely by a single external resistor: I = 67.7mV / R_SET. With <strong>R1 at 6.67kΩ</strong>, this gives <strong>I = 67.7mV / 6670Ω ≈ 10µA.</strong>
   <br><br>
@@ -85,7 +85,7 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </details>
 
 <details>
-<summary>Discharge Circuit</summary>
+<summary>Constant Current Discharge</summary>
 <div class="code-description">
   <strong>Approach:</strong> The discharge circuit is built around an op-amp feedback system that forces a constant 10µA from the supercapacitor regardless of how its voltage changes over time. The key insight is that a constant current discharge causes voltage to drop linearly, which is exactly the behavior needed to calculate capacitance from C = I × Δt / ΔV.
   <br><br>
@@ -122,11 +122,11 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </div>
 <figure style="margin:16px 0; text-align:center;">
   <img src="/images/supercap-monitor-current.png" alt="INA190 current monitoring circuit" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Current monitoring circuit — INA190 with TSZ901ILT3 1.65V reference buffer</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Current monitoring circuit</figcaption>
 </figure>
 <figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-monitor-voltage.png" alt="OPA333 voltage monitoring circuit" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Voltage monitoring circuit — OPA333 unity-gain buffer</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Voltage monitoring circuit</figcaption>
 </figure>
 </details>
 
