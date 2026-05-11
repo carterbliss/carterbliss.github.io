@@ -150,14 +150,32 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <details>
 <summary>Routing, Footprints, Design and Electric Rule Checks</summary>
 <div class="code-description">
-  <strong>Approach:</strong> Before routing, we must ensure our schematic passes the electric rules check (ERC). This runs a variety of checks such as ensuring pins are routed to the correct power input/output, footprint assignments, redudant component titles, etc. Put ERC passing image here: 
-
-  All components have footprints that were either custom-made or implemented from the Ki-Cad footprint library. Our supercapacitor holder is an example of a custom-made footprint by a cohort member. put supercap footprint image and footprints ss here:
-
+  <strong>Approach:</strong> Before routing, we run the Electrical Rules Check (ERC) to verify the schematic is correct: pins routed to the right power rails, no floating inputs, no duplicate references, and all footprints assigned. Passing ERC with 0 violations is a prerequisite before moving to PCB layout.
   <br><br>
-  Routing follows the approach of connecting all power to respective power pins and GND to GND pins. Additionally, all respective decoupling capacitors must be placed as close as possible to the voltage source at each chip to minimize noise. Once all routing is done, we do a DRC check to ensure all components have been properly routed. input routed photo and DRC images here:  
-
+  All components have footprints either pulled from the KiCad library or created manually. Our supercapacitor holder is an example of a custom footprint, built by a team member from the physical dimensions of the in-house fabricated device.
+  <br><br>
+  PCB routing connects all power nets to their respective supply pins and GND pins. Decoupling capacitors are placed as close as possible to each chip's supply pin to minimize noise. Once routing is complete, a Design Rules Check (DRC) verifies that all connections are made and no layout violations exist.
 </div>
+<figure style="margin:16px 0; text-align:center;">
+  <img src="/images/supercap-erc.png" alt="ERC showing 0 violations" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">ERC — 0 violations</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-footprint-assignments.png" alt="Symbol to footprint assignments" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Symbol:Footprint assignments</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-holder-footprint.png" alt="Custom supercapacitor holder footprint" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Custom supercapacitor holder footprint</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-pcb-routed.png" alt="Routed PCB layout" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Routed PCB layout — HASP Experiment Board V1</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-drc.png" alt="DRC showing 0 violations" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">DRC — 0 violations, 0 unconnected items</figcaption>
+</figure>
 </details>
 
 <details>
