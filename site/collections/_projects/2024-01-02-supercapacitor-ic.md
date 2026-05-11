@@ -133,11 +133,18 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <details>
 <summary>MCU Connector</summary>
 <div class="code-description">
-  <strong>Approach:</strong> In order to read the current and voltage values for each cycle of our GCD testing, we must connect our analog outputs, and PWM inputs through a connector piece called the <strong> SM12B-GHS-TB </strong>. This 12 pin connector component is powered by 3V and a 5VA power source, however since there is not a power output pin, we implement PWR_Flag for the ERC. In case of the scenario something on our experiment card bugs/shorts, we have a fuse on each of the power inputs to ensure we do not damage our microcontroller and stop all wiring between boards. IN0 and IN1 are our respective monitoring voltage and current pins, both as inputs on the connector board. RX_MISO_D0 and TX_MOSI_D1 are our PWM pins we code from the microcontroller. Instead of using the same PWM pin for both charge and discharge paths, by enabling a slight delay between PWM's we prevent the risk of split-second shorting of the circuit, and clock-edge shorting. In the case of high-impedance, the RX is pulled by resistors to output a high, therefore ensuring only our charge circuit is inactive and TX is pulled down to ensure our discharge circuit is inactive. 
-
+  <strong>Approach:</strong> To read current and voltage values for each GCD cycle, we connect our analog outputs and PWM inputs through the <strong>SM12B-GHS-TB</strong>, a 12-pin connector. It is powered by 3.3V and 5VA. Since neither rail has a dedicated power output pin on the connector, we implement PWR_FLAG symbols to satisfy the ERC. In case something on the experiment card faults or shorts, a fuse on each power input protects the microcontroller and the wiring between boards. IN0 and IN1 are the voltage and current monitoring pins, received as inputs from the experiment card. RX_MISO_D0 and TX_MOSI_D1 are the PWM control pins driven from the microcontroller. Rather than sharing a single PWM pin for charge and discharge, using separate pins with a slight delay between them eliminates the risk of both paths being active simultaneously, preventing cross-conduction and clock-edge shorting. In the high-impedance state, RX_MISO_D0 is pulled high by a resistor, keeping the charge circuit inactive, and TX_MOSI_D1 is pulled low, keeping the discharge circuit inactive.
   <br><br>
-  Additionally on our schematic we must also include decoupling capacitors at each of the power inputs to all chips. These serve as a filter to ease oscillation around voltage values, and ultamitely limit the noise of voltage inputs to our components. 
+  The schematic also includes decoupling capacitors at the power inputs to every chip. These filter transient voltage fluctuations and ultimately reduce noise on the supply lines to our components.
 </div>
+<figure style="margin:16px 0; text-align:center;">
+  <img src="/images/supercap-mcu-connector.png" alt="SM12B-GHS-TB MCU connector schematic" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">MCU connector schematic — SM12B-GHS-TB with fuses, pull resistors, and signal routing</figcaption>
+</figure>
+<figure style="margin:8px 0 16px; text-align:center;">
+  <img src="/images/supercap-decoupling-caps.png" alt="Decoupling capacitors" style="width:100%; border-radius:6px; border:1px solid #30363d;">
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Decoupling capacitors — 1µF and 0.1µF caps across all 3.3V supply pins</figcaption>
+</figure>
 </details>
 
 <details>
