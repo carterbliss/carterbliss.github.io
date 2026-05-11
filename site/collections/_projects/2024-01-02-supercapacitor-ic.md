@@ -131,6 +131,20 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </details>
 
 <details>
+<summary>MCU Connector</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
+<summary>Routing</summary>
+<div class="code-description">
+  <strong>Approach:</strong> [Coming soon]
+</div>
+</details>
+
+<details>
 <summary>Future Work</summary>
 <div class="code-description">
   <strong>Approach:</strong> My current role has been integrating all subcircuits into a single schematic and walking other team members through the design decisions. Parts and footprints have been assigned to every symbol, and PCB routing has begun. We are waiting to receive components before soldering and assembling the full IC interface and connecting it to the microcontroller. This project will continue to be updated as progress is made throughout the semester.
