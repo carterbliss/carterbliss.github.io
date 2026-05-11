@@ -7,7 +7,7 @@ image: '/images/hasp-balloon.jpg'
 
 ## Overview
 
-As a systems design member of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization experiment system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our fabricated supercapacitors and experimental cards will take flight on a NASA balloon in Fall 2026 inside a payload through the High Altitude Student Platform. Our circuit targets Galvanostatic Charge Discharge cycling in order to determine supercapacitor capacitance stability and resistance over time. Because our experiment will take place in the stratosphere, we must meticulously select components rated down to -60°C. 
+As a systems design subteam engineer of the Chip Scale Power & Energy Vertically Integrated Projects (VIP) team at Georgia Tech, I work on the integrated circuit for a supercapacitor characterization experiment system. The supercapacitors being tested are fabricated in-house and target space-based energy storage applications. Our fabricated supercapacitors and experimental cards will take flight on a NASA balloon in Fall 2026 inside a payload through the High Altitude Student Platform. Our circuit targets Galvanostatic Charge Discharge cycling in order to determine supercapacitor capacitance stability and resistance over time. Because our experiment will take place in the stratosphere, we must meticulously select components rated down to -60°C. 
 
 ## Technical Details
 
@@ -68,16 +68,16 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <details>
 <summary>Constant Current Design</summary>
 <div class="code-description">
-  <strong>Approach:</strong> For charging, rather than building a custom feedback circuit, we use the <strong>LM134H</strong>: a dedicated 3-terminal constant current source chip. The chip is driven by <strong>5VA</strong> and delivers a fixed current directly into the supercapacitor. The output current is set entirely by a single external resistor: I = 67.7mV / R_SET. With <strong>R1 at 6.67kΩ</strong>, this gives I = 67.7mV / 6670Ω ≈ 10µA.
+  <strong>Approach:</strong> The charging path is initially enabled by a pin coming from our microcontroller: <strong> RX_MISO_D0 </strong>. Which is a pulse wave monitor coded to alternate between high and low, (0 to 3.3V). We code the output to operate at a frequency that allows enough time for the supercapacitor to fully charge, which plugs into the PMOS2 in series with the path. Once the PWM outputs a low, the path is enabled. For charging, rather than building a custom feedback circuit, we use the <strong>LM134H</strong>: a dedicated constant current source chip. The chip is driven by <strong>5VA</strong> and delivers a fixed current directly into the supercapacitor. The output current is set entirely by a single external resistor: I = 67.7mV / R_SET. With <strong>R1 at 6.67kΩ</strong>, this gives <strong>I = 67.7mV / 6670Ω ≈ 10µA.</strong>
   <br><br>
-  What makes this chip well-suited for the task is that it internally adjusts its output to compensate for whatever resistance the capacitor presents as its voltage rises during charging. It samples the voltage at its R+ terminal and uses internal feedback to maintain a constant current regardless of deviations in path resistance.
+  What makes this chip well-suited for the task is that it internally adjusts its output to compensate for whatever resistance the supercapacitor presents as its voltage rises during charging. It samples the voltage and uses internal feedback to maintain a constant current regardless of deviations in path resistance.
   <br><br>
-  However, this behavior introduces a risk: once the capacitor is fully charged, the LM134H has no awareness of that state and will continue trying to source current, which can drive the capacitor voltage above its rated limit. To prevent this, the <strong>LM193</strong> comparator monitors the capacitor voltage against a 3V reference. If the capacitor voltage exceeds 3V, the comparator output floats, which is pulled up to 3.3V by a pull-up resistor, opening the gate of the PMOS in series with the charge path and cutting off current. Below 3V, the output is pulled low, keeping the PMOS conducting.
+  However, this behavior introduces a risk: once the supercapacitor is fully charged, the LM134H has no awareness of that state and will continue trying to source current, which can drive the supercapacitor voltage above its rated limit. To prevent this, the <strong>LM193</strong> comparator monitors the supercapacitor voltage against a 3V reference(max the supercapacitor can take). If the capacitor voltage exceeds 3V, the comparator output floats, which is pulled up to 3.3V by a pull-up resistor, opening the gate of the PMOS1 in series with the charge path and cutting off current. Below 3V, the output is pulled low, keeping the PMOS conducting.
   <br><br>
   Since the LM134H relies on an external component model that KiCad's SPICE engine cannot simulate directly, running a transient analysis on the schematic produces no result. To validate the behavior, the LM134H is swapped out for an <strong>IDC</strong> set to output 10µA. This is purely a simulation stand-in and lets us confirm that a 10µA source will behave correctly with the rest of the circuit before committing to the real chip.
 </div>
 <img src="/images/supercap-cc-schematic.png" alt="LM134H constant current charging circuit" style="width:100%; display:block; margin:16px 0; border-radius:6px; border:1px solid #30363d;">
-<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The simulation confirms it: <strong style="color:#c9d1d9;">I(R1) holds flat at exactly 10µA</strong> across the entire run, showing that the IDC delivers perfectly constant current into the capacitor regardless of how the capacitor voltage changes over time.</p>
+<p style="font-size:14px; line-height:1.6; color:#8b949e; margin:0 0 8px;">The simulation confirms <strong style="color:#c9d1d9;">I(R1) holds flat at exactly 10µA</strong> across the entire run, showing that the IDC delivers perfectly constant current into the capacitor regardless of how the capacitor voltage changes over time.</p>
 <figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-idc-sim.png" alt="IDC constant current simulation" style="width:100%; border-radius:6px; border:1px solid #30363d;">
   <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">TRAN simulation with IDC: I(R1) = 10µA flat, validating constant current through the capacitor</figcaption>
@@ -99,32 +99,14 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </figure>
 </details>
 
-
-<details>
-<summary>Switches</summary>
-<div class="code-description">
-  <strong>Approach:</strong> The switching system controls when the supercapacitor charges and discharges. The timing is driven by <strong>V3 (VPULSE)</strong>, a pulse wave monitor (PWM) on Ki-Cad is coded as a voltage source with PULSE(0 3.3 0 1u 1u 650m 1300m): meaning it switches between 0V and 3.3V with a 650ms on-time and a 1300ms period. This pulse signal drives <strong>Q3 (NMOS)</strong>, which acts as the discharge switch, connecting the discharge path to the discharging circuit when the pulse is high. The 650ms period allows the supercapacitor enough time to fully charge and discharge with 10µA current source. <strong>Q4 (PMOS)</strong> is the complementary switch that handles the charge path, turning on when Q3 is off. <strong>R5 (9kΩ)</strong> sits in the gate drive path to limit current during switching transitions. Currently the PWM is a spice directive from a modified voltage source, for our fabricated PCB this will be driven by our microcontroller coded with rust. 
-  <br><br>
-  The second part of the switching system essentially prevents the supercapacitor from over charging. During simulation, a repetitive error occured that simulation breaks with constant current charge because it causes the voltage of the capacitor to exceed 3.3V. This <strong>LM193 comparator (U6)</strong> compares the voltage between capacitor and a reference of 3V. Once the capacitor reading in the non-inverting terminal exceeds that of the inverting terminal, it will output a float, which is connected in a node with a pull-up resistor that powers the p-mosfet to open and therefore stop charging. Although theoretically if we source the constant current chip with 3.3V, the cap cannot exceed that value, this comparator just serves a back-up switch mechanism to prevent any possible supercapacitor capacitance interference.
-.</div>
-<div style="display:flex; gap:16px; margin:16px 0;">
-  <figure style="margin:0; width:50%; text-align:center;">
-    <img src="/images/supercap-switch1.png" alt="Pulse switch circuit" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">VPULSE driver with NMOS/PMOS switches</figcaption>
-  </figure>
-  <figure style="margin:0; width:50%; text-align:center;">
-    <img src="/images/supercap-switch2.png" alt="Comparator charge control" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-    <figcaption style="font-size:12px; color:#8b949e; margin-top:6px;">LM193 comparator controlling charge cutoff</figcaption>
-  </figure>
-</div>
-</details>
-
 <details>
 <summary>Monitor Current & Monitor Voltage</summary>
 <div class="code-description">
-  <strong>Approach:</strong> To calculate capacitance (C = I × Δt / ΔV), the microcontroller needs to continuously read both the current through and the voltage across the supercapacitor. These two monitoring subunits each condition their respective signal into a clean ADC-readable voltage and route it to the microcontroller's flash memory for logging.
+  <strong>Approach:</strong> To determine how the supercapacitor retains capacitance and resistance in stratospheric conditions, we must record the voltage and current through the path during each cycle, and report these values back to our microcontroller (STM32). These analog signals will report to the STM32, and then will be stored to flash in order to log all important data. 
   <br><br>
-  <strong>Current monitoring — INA282 (IC2):</strong> The INA282 is a high-side current sense amplifier with a fixed gain of 50 V/V. A shunt resistor <strong>R4 (300Ω)</strong> is placed in series with the high-side input. As current flows through R4, a small differential voltage develops across IN+ and IN−. The INA282 is an automotive grade current sense amplifier that amplifies by 50× and adds a reference offset set by the <strong>R9 (23.2kΩ) / R10 (10kΩ)</strong> voltage divider from +5V: V_REF1 = 5V × 10k / (23.2k + 10k) ≈ 1.51V. Offsetting the output around 1.51V allows the ADC to read bidirectional current without the output going negative. For example, at 10µA: V_shunt = 10µA × 300Ω = 3mV, so V_out = 50 × 3mV + 1.51V = 1.66V. The output is filtered by <strong>R11 (1kΩ)</strong> and <strong>C4</strong> forming a filter before reaching <strong>ADC_INPUT_1</strong>.
+  <strong>Current monitoring:</strong> For our monitoring current schematic, we chose to implement a bi-directional current sense amplifier. This would intake minimal voltage from the path, disrupting the readings as little as possible, and would output an analog value of current multiplied by a gain to the microcontroller that will later convert to a digital reading. 
+
+  <strong> R3 (6k ohm)</strong> is dedicated as a shunt and sense resistor which is calculated by the voltage dropoff. V = I * R. 60 mV = 10 micra A * Rsense. Rsense = 6k ohm. By dropping the voltage across pins IN+ and IN-, the chip reads the difference in voltage and compares 
   <br><br>
   <strong>Voltage monitoring — MCP1501 (U2):</strong> The MCP1501-33xSN is a precision voltage reference/buffer that reads the supercapacitor voltage (Vcap on <strong>C2, 1.6µF</strong>) and presents it as a stable, low-impedance signal to the ADC. This prevents the ADC's input impedance from loading the capacitor and disturbing the measurement. Its output passes through <strong>R8 (20Ω)</strong> and <strong>C3</strong> (another RC low-pass filter) before reaching <strong>ADC_INPUT_2</strong>. The SHDN pin allows the microcontroller to power down the reference when a reading isn't needed, reducing idle current draw.
   <br><br>
