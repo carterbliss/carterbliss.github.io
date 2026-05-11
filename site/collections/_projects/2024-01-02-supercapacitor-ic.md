@@ -139,18 +139,24 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 </div>
 <figure style="margin:16px 0; text-align:center;">
   <img src="/images/supercap-mcu-connector.png" alt="SM12B-GHS-TB MCU connector schematic" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">MCU connector schematic — SM12B-GHS-TB with fuses, pull resistors, and signal routing</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">MCU connector schematic</figcaption>
 </figure>
 <figure style="margin:8px 0 16px; text-align:center;">
   <img src="/images/supercap-decoupling-caps.png" alt="Decoupling capacitors" style="width:100%; border-radius:6px; border:1px solid #30363d;">
-  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Decoupling capacitors — 1µF and 0.1µF caps across all 3.3V supply pins</figcaption>
+  <figcaption style="font-size:13px; color:#8b949e; margin-top:8px;">Decoupling capacitors</figcaption>
 </figure>
 </details>
 
 <details>
-<summary>Routing</summary>
+<summary>Routing, Footprints, Design and Electric Rule Checks</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> Before routing, we must ensure our schematic passes the electric rules check (ERC). This runs a variety of checks such as ensuring pins are routed to the correct power input/output, footprint assignments, redudant component titles, etc. Put ERC passing image here: 
+
+  All components have footprints that were either custom-made or implemented from the Ki-Cad footprint library. Our supercapacitor holder is an example of a custom-made footprint by a cohort member. put supercap footprint image and footprints ss here:
+
+  <br><br>
+  Routing follows the approach of connecting all power to respective power pins and GND to GND pins. Additionally, all respective decoupling capacitors must be placed as close as possible to the voltage source at each chip to minimize noise. Once all routing is done, we do a DRC check to ensure all components have been properly routed. input routed photo and DRC images here:  
+
 </div>
 </details>
 
