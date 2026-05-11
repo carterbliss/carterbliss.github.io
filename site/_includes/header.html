@@ -28,7 +28,7 @@
 
                 {% else %}
                 <li class="nav__item">
-                  <a href="{{ item.url | relative_url }}" class="nav__link{% if page.url == item.url %} active-link{% endif %}">{{ item.title }}</a>
+                  <a href="{{ item.url | relative_url }}" class="nav__link{% if page.url == item.url %} active-link{% endif %}"{% if item.url contains '.pdf' %} target="_blank" rel="noopener"{% endif %}>{{ item.title }}</a>
                 </li>
                 {% endif %}
               {% endfor %}
