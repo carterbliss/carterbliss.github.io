@@ -133,7 +133,10 @@ As experiment card circuit lead, I used my prior PCB experience from HyTech Raci
 <details>
 <summary>MCU Connector</summary>
 <div class="code-description">
-  <strong>Approach:</strong> [Coming soon]
+  <strong>Approach:</strong> In order to read the current and voltage values for each cycle of our GCD testing, we must connect our analog outputs, and PWM inputs through a connector piece called the <strong> SM12B-GHS-TB </strong>. This 12 pin connector component is powered by 3V and a 5VA power source, however since there is not a power output pin, we implement PWR_Flag for the ERC. In case of the scenario something on our experiment card bugs/shorts, we have a fuse on each of the power inputs to ensure we do not damage our microcontroller and stop all wiring between boards. IN0 and IN1 are our respective monitoring voltage and current pins, both as inputs on the connector board. RX_MISO_D0 and TX_MOSI_D1 are our PWM pins we code from the microcontroller. Instead of using the same PWM pin for both charge and discharge paths, by enabling a slight delay between PWM's we prevent the risk of split-second shorting of the circuit, and clock-edge shorting. In the case of high-impedance, the RX is pulled by resistors to output a high, therefore ensuring only our charge circuit is inactive and TX is pulled down to ensure our discharge circuit is inactive. 
+
+  <br><br>
+  Additionally on our schematic we must also include decoupling capacitors at each of the power inputs to all chips. These serve as a filter to ease oscillation around voltage values, and ultamitely limit the noise of voltage inputs to our components. 
 </div>
 </details>
 
