@@ -21,22 +21,6 @@
     }
   }
 
-  &__intro {
-    text-align: center;
-    max-width: 720px;
-    margin: 0 auto 48px;
-
-    p {
-      font-size: 17px;
-      line-height: 1.8;
-      color: $text-color;
-    }
-
-    @media only screen and (max-width: $tablet) {
-      margin-bottom: 32px;
-    }
-  }
-
   &__columns {
     display: flex;
     gap: 48px;
@@ -74,33 +58,16 @@
   }
 
   &__coursework {
-    .course-group-label {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: $text-color;
-      margin: 20px 0 8px;
-
-      &:first-child {
-        margin-top: 0;
-      }
-    }
-
     ul {
       list-style: none;
       padding: 0;
-      margin: 0 0 4px;
+      margin: 0;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
     li {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
       padding: 10px 14px;
       background: $background-color-alt;
       border-radius: 8px;
@@ -110,16 +77,14 @@
       line-height: 1.4;
       border-left: 3px solid $primary-color;
 
-      &.current { border-left-color: $primary-color; }
-      &.past    { border-left-color: #3fb950; }
-      &.future  { border-left-color: #8b949e; }
+      a {
+        color: inherit;
+        text-decoration: none;
 
-      span {
-        font-size: 13px;
-        font-weight: 400;
-        color: $text-color;
-        white-space: nowrap;
-        flex-shrink: 0;
+        &:hover {
+          color: $primary-color;
+          text-decoration: underline;
+        }
       }
     }
   }
